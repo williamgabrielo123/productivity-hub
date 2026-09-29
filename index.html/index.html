@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="description" content="Productivity Hub — Kelola tugas, sesi fokus, dan jurnal harianmu dalam satu aplikasi." />
+  <title>Productivity Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal-700: #0f766e;
+      --teal-600: #0d9488;
+      --teal-500: #14b8a6;
+      --teal-400: #2dd4bf;
+      --teal-300: #5eead4;
+      --teal-50:  #f0fdfa;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --white: #ffffff;
+      --danger: #ef4444;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.06);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08);
+      --nav-height: 68px;
+      --header-height: 64px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{height:100%}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:var(--slate-100);
+      min-height:100%;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      -webkit-tap-highlight-color:transparent;
+      overscroll-behavior:none;
+    }
+    #app{
+      position:relative;width:100%;max-width:420px;
+      min-height:100vh;background:var(--slate-100);
+      display:flex;flex-direction:column;overflow:hidden;
+    }
+    @media(min-width:480px){
+      body{align-items:center;min-height:100vh;padding:24px 0}
+      #app{
+        min-height:min(900px,calc(100vh - 48px));
+        max-height:min(900px,calc(100vh - 48px));
+        border-radius:40px;
+        box-shadow:var(--shadow-lg),0 0 0 8px rgba(15,118,110,.08);
+        overflow:hidden;
+      }
+    }
+    /* HEADER */
+    .app-header{
+      position:sticky;top:0;z-index:100;height:var(--header-height);
+      background:linear-gradient(135deg,var(--teal-700) 0%,var(--teal-600) 100%);
+      display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+    }
+    .app-header-icon{width:36px;height:36px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+    .app-header-text{flex:1}
+    .app-header-text h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px}
+    .app-header-text p{font-size:11px;color:rgba(255,255,255,.72);margin-top:1px}
+    .header-date{font-size:11px;font-weight:500;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px}
+    /* CONTENT */
+    .tab-content-wrapper{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-height) + 8px);scroll-behavior:smooth}
+    .tab-panel{display:none;animation:fadeSlideIn .25s ease both}
+    .tab-panel.active{display:block}
+    @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    /* BOTTOM NAV */
+    .bottom-nav{
+      position:sticky;bottom:0;z-index:200;height:var(--nav-height);
+      background:#fff;border-top:1px solid var(--slate-200);
+      display:flex;align-items:stretch;flex-shrink:0;
+      box-shadow:0 -4px 20px rgba(0,0,0,.07);
+    }
+    .nav-tab{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;border:none;background:transparent;cursor:pointer;padding:6px 2px;
+      transition:all .2s ease;position:relative;-webkit-tap-highlight-color:transparent;
+    }
+    .nav-tab::before{
+      content:'';position:absolute;top:0;left:50%;transform:translateX(-50%) scaleX(0);
+      width:32px;height:3px;background:var(--teal-500);border-radius:0 0 4px 4px;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .nav-tab.active::before{transform:translateX(-50%) scaleX(1)}
+    .nav-tab-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+    .nav-tab.active .nav-tab-icon{transform:scale(1.15)}
+    .nav-tab svg{width:20px;height:20px;stroke-width:1.9;stroke:var(--slate-400);fill:none;transition:stroke .2s}
+    .nav-tab.active svg{stroke:var(--teal-600)}
+    .nav-label{font-size:9.5px;font-weight:600;letter-spacing:.2px;color:var(--slate-400);transition:color .2s}
+    .nav-tab.active .nav-label{color:var(--teal-600)}
+    /* SECTIONS */
+    .section-header{padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between}
+    .section-title{font-size:20px;font-weight:800;color:var(--slate-900)}
+    .section-subtitle{font-size:13px;color:var(--slate-500);margin-top:2px}
+    /* CARDS */
+    .card{background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
+    .card-padded{padding:16px}
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;font-family:inherit;font-weight:600;transition:all .18s ease;-webkit-tap-highlight-color:transparent}
+    .btn:active{transform:scale(.96)}
+    .btn-primary{background:linear-gradient(135deg,var(--teal-700),var(--teal-500));color:#fff;border-radius:var(--radius-sm);padding:12px 20px;font-size:14px;box-shadow:0 4px 14px rgba(15,118,110,.35)}
+    .btn-primary:hover{box-shadow:0 6px 20px rgba(15,118,110,.45)}
+    /* INPUTS */
+    .input-row{display:flex;gap:8px;align-items:flex-start}
+    .input-field{flex:1;padding:12px 14px;font-size:14px;font-family:inherit;font-weight:500;border:2px solid var(--slate-200);border-radius:var(--radius-sm);outline:none;transition:border-color .2s,box-shadow .2s;background:#fff;color:var(--slate-900)}
+    .input-field::placeholder{color:var(--slate-400);font-weight:400}
+    .input-field:focus{border-color:var(--teal-500);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+    textarea.input-field{resize:none;line-height:1.6}
+    /* ── TASKS ── */
+    .task-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 20px 16px}
+    .task-stat{background:#fff;border-radius:var(--radius-md);padding:14px 10px;text-align:center;box-shadow:var(--shadow-sm)}
+    .task-stat-number{font-size:22px;font-weight:800;color:var(--teal-700)}
+    .task-stat-label{font-size:10px;font-weight:500;color:var(--slate-500);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+    /* Add form */
+    .add-task-form{padding:0 20px 14px}
+    .add-task-inputs{display:flex;flex-direction:column;gap:10px}
+    .task-input-wrap{display:flex;gap:8px;align-items:center}
+    .task-input-wrap .input-field{flex:1}
+    .add-btn{width:46px;height:46px;flex-shrink:0;border-radius:12px;border:none;cursor:pointer;
+      background:linear-gradient(135deg,var(--teal-700),var(--teal-500));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 14px rgba(15,118,110,.35);transition:all .18s ease;}
+    .add-btn:active{transform:scale(.93)}
+    .add-btn svg{width:20px;height:20px;stroke:#fff;stroke-width:2.5;fill:none}
+    /* Priority pills */
+    .priority-row{display:flex;gap:6px}
+    .priority-chip{
+      flex:1;padding:8px 6px;text-align:center;
+      font-size:12px;font-weight:700;
+      border-radius:50px;/* full pill */
+      border:2px solid transparent;cursor:pointer;
+      transition:all .2s cubic-bezier(.34,1.56,.64,1);
+      letter-spacing:.2px;
+    }
+    /* default (unselected) muted */
+    .priority-chip[data-p="high"]{background:#fef2f2;color:#ef4444;border-color:#fecaca}
+    .priority-chip[data-p="medium"]{background:#fffbeb;color:#f59e0b;border-color:#fde68a}
+    .priority-chip[data-p="low"]{background:#f0fdf4;color:#10b981;border-color:#bbf7d0}
+    /* selected = filled */
+    .priority-chip.selected[data-p="high"]{background:#ef4444;color:#fff;border-color:#ef4444;box-shadow:0 3px 10px rgba(239,68,68,.35);transform:scale(1.04)}
+    .priority-chip.selected[data-p="medium"]{background:#f59e0b;color:#fff;border-color:#f59e0b;box-shadow:0 3px 10px rgba(245,158,11,.35);transform:scale(1.04)}
+    .priority-chip.selected[data-p="low"]{background:#10b981;color:#fff;border-color:#10b981;box-shadow:0 3px 10px rgba(16,185,129,.35);transform:scale(1.04)}
+    /* Filter tabs */
+    .filter-row{display:flex;gap:0;padding:0 20px 14px}
+    .filter-row-inner{
+      display:flex;flex:1;background:var(--slate-100);
+      border-radius:12px;padding:3px;gap:2px;
+    }
+    .filter-chip{
+      flex:1;padding:8px 4px;text-align:center;
+      font-size:12px;font-weight:600;
+      border-radius:9px;border:none;
+      background:transparent;color:var(--slate-500);
+      cursor:pointer;transition:all .2s ease;
+    }
+    .filter-chip.active{
+      background:#fff;color:var(--teal-700);
+      box-shadow:0 1px 4px rgba(0,0,0,.10);
+    }
+    /* Task list */
+    .task-list{padding:0 20px;display:flex;flex-direction:column;gap:9px}
+    .task-item{
+      background:#fff;border-radius:var(--radius-md);
+      padding:14px 14px 14px 0;
+      display:flex;align-items:center;gap:12px;
+      box-shadow:var(--shadow-sm);
+      transition:opacity .3s ease,transform .2s ease;
+      animation:fadeSlideIn .22s ease both;
+      overflow:hidden;
+      position:relative;
+    }
+    /* Left accent bar */
+    .task-item::before{
+      content:'';position:absolute;left:0;top:0;bottom:0;
+      width:4px;border-radius:4px 0 0 4px;
+      background:var(--slate-200);
+      transition:background .2s;
+    }
+    .task-item.pri-high::before{background:#ef4444}
+    .task-item.pri-medium::before{background:#f59e0b}
+    .task-item.pri-low::before{background:#10b981}
+    .task-item .task-inner{display:flex;align-items:center;gap:12px;flex:1;padding-left:14px}
+    /* Done state */
+    .task-item.done{opacity:.48}
+    .task-item.done .task-text{text-decoration:line-through;color:var(--slate-400)}
+    /* Circular check button */
+    .task-check{
+      width:26px;height:26px;border-radius:50%;flex-shrink:0;
+      border:2px solid var(--slate-300);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .22s cubic-bezier(.34,1.56,.64,1);
+      background:#fff;
+    }
+    .task-check:hover{border-color:var(--teal-400);background:var(--teal-50)}
+    .task-check.checked{
+      background:var(--teal-600);border-color:var(--teal-600);
+      box-shadow:0 2px 8px rgba(13,148,136,.35);
+    }
+    .task-check svg{width:12px;height:12px;stroke:#fff;stroke-width:3;opacity:0;transition:opacity .15s;fill:none;transform:scale(.8);transition:opacity .15s,transform .15s}
+    .task-check.checked svg{opacity:1;transform:scale(1)}
+    /* Task text area */
+    .task-info{flex:1;min-width:0}
+    .task-text{font-size:14px;font-weight:500;color:var(--slate-800);line-height:1.45;transition:color .25s}
+    .task-priority-dot{
+      display:inline-block;width:7px;height:7px;border-radius:50%;
+      margin-right:6px;flex-shrink:0;vertical-align:middle;
+    }
+    .dot-high{background:#ef4444}
+    .dot-medium{background:#f59e0b}
+    .dot-low{background:#10b981}
+    .task-meta{display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap}
+    .task-meta-tag{
+      font-size:10px;font-weight:600;padding:2px 8px;
+      border-radius:20px;letter-spacing:.3px;
+    }
+    .tag-high{background:#fef2f2;color:#ef4444}
+    .tag-medium{background:#fffbeb;color:#d97706}
+    .tag-low{background:#f0fdf4;color:#10b981}
+    .tag-date{background:var(--slate-100);color:var(--slate-500)}
+    /* Delete button */
+    .task-delete{
+      width:32px;height:32px;border-radius:8px;border:none;background:none;
+      color:var(--slate-300);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:all .15s;flex-shrink:0;margin-right:4px;
+    }
+    .task-delete:hover{background:#fef2f2;color:#ef4444}
+    .task-delete svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+    /* Empty state */
+    .empty-state{text-align:center;padding:48px 20px}
+    .empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+    .empty-state p{font-size:14px;color:var(--slate-400);font-weight:500}
+    /* FOCUS */
+    .focus-panel{padding:20px}
+    .preset-row{display:flex;gap:8px;margin-bottom:24px}
+    .preset-btn{flex:1;padding:10px 4px;text-align:center;font-size:12px;font-weight:700;border-radius:var(--radius-sm);border:2px solid var(--slate-200);background:#fff;color:var(--slate-600);cursor:pointer;transition:all .18s}
+    .preset-btn.active{background:var(--teal-700);color:#fff;border-color:var(--teal-700);box-shadow:0 4px 12px rgba(15,118,110,.3)}
+    .timer-ring-wrap{display:flex;justify-content:center;align-items:center;margin-bottom:28px}
+    .timer-ring-container{position:relative;width:230px;height:230px}
+    .timer-svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .timer-track{fill:none;stroke:var(--slate-200);stroke-width:10}
+    .timer-progress{fill:none;stroke:url(#timerGradient);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+    .timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .timer-display{font-size:52px;font-weight:800;color:var(--slate-900);letter-spacing:-3px;line-height:1}
+    .timer-label{font-size:12px;font-weight:600;color:var(--slate-400);text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+    .timer-controls{display:flex;justify-content:center;gap:14px;margin-bottom:28px}
+    .timer-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+    .timer-btn:active{transform:scale(.9)}
+    .timer-btn-main{width:68px;height:68px;background:linear-gradient(135deg,var(--teal-700),var(--teal-500));box-shadow:0 6px 20px rgba(15,118,110,.4)}
+    .timer-btn-main svg{width:28px;height:28px;fill:white;stroke:none}
+    .timer-btn-secondary{background:#fff;box-shadow:var(--shadow-md)}
+    .timer-btn-secondary svg{width:20px;height:20px;stroke:var(--slate-500);fill:none;stroke-width:2}
+    .session-card{background:#fff;border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-sm)}
+    .session-card h3{font-size:13px;font-weight:700;color:var(--slate-700);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+    .session-dots{display:flex;gap:8px;flex-wrap:wrap}
+    .session-dot{width:20px;height:20px;border-radius:50%;background:var(--slate-200);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+    .session-dot.done{background:linear-gradient(135deg,var(--teal-600),var(--teal-400));box-shadow:0 2px 8px rgba(20,184,166,.4);transform:scale(1.1)}
+    .focus-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .focus-stat{background:var(--teal-50);border-radius:var(--radius-sm);padding:12px}
+    .focus-stat-num{font-size:20px;font-weight:800;color:var(--teal-700)}
+    .focus-stat-label{font-size:11px;color:var(--teal-600);margin-top:2px;font-weight:500}
+    /* JOURNAL */
+    .journal-panel{padding:0 20px 20px}
+    .mood-selector{background:#fff;border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-sm);margin-bottom:14px}
+    .mood-selector h3{font-size:12px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    .mood-row{display:flex;gap:8px}
+    .mood-btn{flex:1;padding:10px 4px;border-radius:var(--radius-sm);border:2px solid var(--slate-200);background:#fff;cursor:pointer;font-size:20px;text-align:center;transition:all .18s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;align-items:center;gap:3px}
+    .mood-btn span.mood-label{font-size:9px;font-weight:600;color:var(--slate-400);text-transform:uppercase;letter-spacing:.3px}
+    .mood-btn.selected{border-color:var(--teal-500);background:var(--teal-50);transform:scale(1.05)}
+    .mood-btn.selected span.mood-label{color:var(--teal-700)}
+    .journal-compose{background:#fff;border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+    .journal-compose h3{font-size:13px;font-weight:700;color:var(--slate-700);margin-bottom:10px}
+    textarea.journal-input{width:100%;min-height:100px;padding:12px;border:2px solid var(--slate-200);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--slate-800);outline:none;transition:border-color .2s,box-shadow .2s;resize:none;line-height:1.7}
+    textarea.journal-input:focus{border-color:var(--teal-500);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+    .journal-char-count{font-size:11px;color:var(--slate-400);text-align:right;margin-top:6px}
+    .journal-save-row{display:flex;justify-content:flex-end;margin-top:10px}
+    .journal-entries{display:flex;flex-direction:column;gap:10px}
+    .journal-day-label{font-size:11px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+    .journal-entry-card{background:#fff;border-radius:var(--radius-md);padding:14px;box-shadow:var(--shadow-sm);animation:fadeSlideIn .2s ease both;border-left:3px solid var(--teal-400);margin-bottom:8px}
+    .journal-entry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .journal-entry-meta{display:flex;align-items:center;gap:8px}
+    .journal-entry-mood{font-size:18px}
+    .journal-entry-time{font-size:11px;font-weight:600;color:var(--slate-400)}
+    .journal-entry-text{font-size:14px;color:var(--slate-700);line-height:1.65}
+    .journal-entry-delete{width:26px;height:26px;border-radius:6px;border:none;background:none;color:var(--slate-300);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+    .journal-entry-delete:hover{background:#fef2f2;color:var(--danger)}
+    .journal-entry-delete svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2}
+    .tab-content-wrapper::-webkit-scrollbar{width:3px}
+    .tab-content-wrapper::-webkit-scrollbar-track{background:transparent}
+    .tab-content-wrapper::-webkit-scrollbar-thumb{background:var(--teal-300);border-radius:4px}
+    /* ── QUIZ MAKER & SUBJECTS ── */
+    .quiz-panel{padding:0 20px 16px;display:flex;flex-direction:column;gap:14px}
+    .quiz-hero-card{
+      background:linear-gradient(135deg,#0f766e 0%,#115e59 100%);
+      border-radius:var(--radius-md);padding:18px;color:#fff;
+      box-shadow:0 8px 24px rgba(15,118,110,.25);position:relative;overflow:hidden;
+    }
+    .quiz-hero-card::after{
+      content:'🎓';position:absolute;right:12px;bottom:-10px;font-size:72px;opacity:.15;pointer-events:none;
+    }
+    .quiz-hero-badge{display:inline-block;padding:3px 9px;background:rgba(255,255,255,.2);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+    .quiz-hero-title{font-size:18px;font-weight:800;line-height:1.25;margin-bottom:4px}
+    .quiz-hero-desc{font-size:12px;color:rgba(255,255,255,.82);line-height:1.4}
+    .quiz-top-actions{display:flex;gap:8px;margin-top:12px}
+    .quiz-action-pill{
+      flex:1;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+      color:#fff;border-radius:12px;padding:9px 8px;font-size:11.5px;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+      transition:all .18s ease;-webkit-tap-highlight-color:transparent;
+    }
+    .quiz-action-pill:active{transform:scale(.95);background:rgba(255,255,255,.28)}
+
+    /* Subject Grid */
+    .subject-section-head{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+    .subject-section-title{font-size:13px;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:.5px}
+    .subject-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .subject-card{
+      background:#fff;border-radius:16px;padding:14px;box-shadow:var(--shadow-sm);
+      border:1.5px solid var(--slate-200);cursor:pointer;
+      transition:all .22s cubic-bezier(.34,1.56,.64,1);
+      display:flex;flex-direction:column;justify-content:space-between;gap:10px;
+      position:relative;overflow:hidden;
+    }
+    .subject-card:active{transform:scale(.96);border-color:var(--teal-500)}
+    .subject-card-top{display:flex;align-items:center;justify-content:space-between}
+    .subject-icon-wrap{
+      width:40px;height:40px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;font-size:20px;
+    }
+    .subject-count-pill{
+      font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;background:var(--slate-100);color:var(--slate-600);
+    }
+    .subject-name{font-size:13.5px;font-weight:800;color:var(--slate-900);line-height:1.2}
+    .subject-score-text{font-size:10px;font-weight:600;color:var(--slate-400);display:flex;align-items:center;gap:3px}
+    .subject-score-text.has-score{color:var(--teal-700);font-weight:700}
+    
+    .subject-card[data-subj="matematika"] .subject-icon-wrap{background:#eff6ff;color:#2563eb}
+    .subject-card[data-subj="ipa"] .subject-icon-wrap{background:#ecfdf5;color:#059669}
+    .subject-card[data-subj="ips"] .subject-icon-wrap{background:#fffbeb;color:#d97706}
+    .subject-card[data-subj="bindonesia"] .subject-icon-wrap{background:#fef2f2;color:#dc2626}
+    .subject-card[data-subj="binggris"] .subject-icon-wrap{background:#f5f3ff;color:#7c3aed}
+    .subject-card[data-subj="informatika"] .subject-icon-wrap{background:#ecfeff;color:#0891b2}
+    .subject-card.all-mix{grid-column:1 / -1;background:linear-gradient(135deg,#fff,#f8fafc);border:2px dashed var(--teal-300)}
+
+    /* Active Quiz Screen */
+    .quiz-view{display:none;animation:fadeSlideIn .25s ease both}
+    .quiz-view.active{display:flex;flex-direction:column;gap:14px}
+    .quiz-nav-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:6px 0;gap:10px;
+    }
+    .quiz-back-btn{
+      background:var(--slate-200);border:none;cursor:pointer;
+      width:36px;height:36px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      color:var(--slate-700);font-weight:700;transition:all .15s ease;
+    }
+    .quiz-back-btn:active{transform:scale(.9)}
+    .quiz-subject-indicator{
+      display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--slate-800);
+    }
+    .quiz-progress-text{font-size:11px;font-weight:700;color:var(--teal-700);background:var(--teal-50);padding:4px 10px;border-radius:20px;border:1px solid var(--teal-300)}
+    .quiz-progress-bar-wrap{width:100%;height:6px;background:var(--slate-200);border-radius:10px;overflow:hidden}
+    .quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--teal-500),var(--teal-400));width:0%;transition:width .3s ease;border-radius:10px}
+
+    /* Question Card */
+    .quiz-question-box{
+      background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow-sm);
+      border:1px solid var(--slate-200);display:flex;flex-direction:column;gap:10px;
+    }
+    .quiz-q-topic{display:inline-block;align-self:flex-start;font-size:10px;font-weight:700;color:var(--teal-700);background:var(--teal-50);padding:3px 8px;border-radius:6px;text-transform:uppercase}
+    .quiz-q-text{font-size:15px;font-weight:700;color:var(--slate-900);line-height:1.5}
+
+    /* Option Choices */
+    .quiz-options-group{display:flex;flex-direction:column;gap:9px}
+    .quiz-option-btn{
+      background:#fff;border:2px solid var(--slate-200);border-radius:14px;
+      padding:12px 14px;display:flex;align-items:center;gap:12px;
+      cursor:pointer;text-align:left;font-family:inherit;
+      font-size:13px;font-weight:600;color:var(--slate-800);
+      transition:all .18s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shadow-sm);
+    }
+    .quiz-option-btn:active{transform:scale(.98)}
+    .quiz-opt-letter{
+      width:28px;height:28px;border-radius:8px;background:var(--slate-100);
+      border:1.5px solid var(--slate-200);color:var(--slate-600);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:800;flex-shrink:0;transition:all .2s ease;
+    }
+    .quiz-opt-text{flex:1;line-height:1.35}
+    .quiz-option-btn.correct{
+      background:#ecfdf5;border-color:var(--teal-500);color:#065f46;
+      box-shadow:0 3px 12px rgba(16,185,129,.25);
+    }
+    .quiz-option-btn.correct .quiz-opt-letter{
+      background:var(--teal-600);border-color:var(--teal-600);color:#fff;
+    }
+    .quiz-option-btn.wrong{
+      background:#fef2f2;border-color:var(--danger);color:#991b1b;
+      box-shadow:0 3px 12px rgba(239,68,68,.25);
+    }
+    .quiz-option-btn.wrong .quiz-opt-letter{
+      background:var(--danger);border-color:var(--danger);color:#fff;
+    }
+    .quiz-option-btn.dimmed{opacity:.4;pointer-events:none}
+
+    /* Explanation Box */
+    .quiz-explanation-card{
+      background:#f0fdfa;border:1.5px solid var(--teal-300);
+      border-left:4px solid var(--teal-600);border-radius:12px;
+      padding:12px 14px;animation:fadeSlideIn .25s ease both;
+    }
+    .quiz-exp-title{font-size:11.5px;font-weight:800;color:var(--teal-700);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:5px;margin-bottom:4px}
+    .quiz-exp-body{font-size:12.5px;color:var(--slate-700);line-height:1.45}
+
+    .quiz-next-action{padding-top:4px}
+    .btn-quiz-next{
+      width:100%;padding:14px;border-radius:14px;background:linear-gradient(135deg,var(--teal-700),var(--teal-500));
+      color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;
+      box-shadow:0 4px 14px rgba(15,118,110,.35);transition:all .18s ease;display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .btn-quiz-next:active{transform:scale(.97)}
+
+    /* Result View */
+    .quiz-result-card{
+      background:#fff;border-radius:24px;padding:24px 18px;text-align:center;
+      box-shadow:var(--shadow-md);border:1px solid var(--slate-200);display:flex;flex-direction:column;align-items:center;
+    }
+    .result-score-circle{
+      width:100px;height:100px;border-radius:50%;
+      background:linear-gradient(135deg,var(--teal-50),#ccfbf1);
+      border:4px solid var(--teal-500);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(20,184,166,.3);
+      margin-bottom:14px;
+    }
+    .result-score-val{font-size:32px;font-weight:800;color:var(--teal-700),line-height:1}
+    .result-score-max{font-size:10px;font-weight:700;color:var(--teal-600);text-transform:uppercase}
+    .result-feedback-title{font-size:17px;font-weight:800;color:var(--slate-900);margin-bottom:4px}
+    .result-feedback-desc{font-size:12px;color:var(--slate-500);line-height:1.4;max-width:280px;margin-bottom:16px}
+    .result-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin-bottom:16px}
+    .result-stat-card{background:var(--slate-100);border-radius:12px;padding:10px 4px;text-align:center}
+    .result-stat-card-val{font-size:15px;font-weight:800;color:var(--slate-800)}
+    .result-stat-card-lbl{font-size:9.5px;font-weight:600;color:var(--slate-500);margin-top:2px;text-transform:uppercase}
+    .result-actions{display:flex;flex-direction:column;gap:8px;width:100%}
+
+    /* Quiz Review Section */
+    .quiz-review-section{display:flex;flex-direction:column;gap:10px}
+    .quiz-review-head{font-size:12px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:.5px}
+    .review-card{
+      background:#fff;border-radius:14px;padding:12px 14px;border:1px solid var(--slate-200);
+      display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm);
+    }
+    .review-card-top{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700}
+    .review-status-correct{color:#10b981}
+    .review-status-wrong{color:var(--danger)}
+    .review-q{font-size:12.5px;font-weight:600;color:var(--slate-800);line-height:1.4}
+    .review-ans-row{display:flex;flex-direction:column;gap:3px;font-size:11.5px;margin-top:2px}
+    .review-user-ans{color:var(--slate-600)}
+    .review-correct-ans{color:var(--teal-700);font-weight:700}
+    .review-exp{background:var(--slate-100);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--slate-600);line-height:1.4;margin-top:4px}
+
+    /* Quiz Maker Form */
+    .maker-card{background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px}
+    .maker-field{display:flex;flex-direction:column;gap:5px}
+    .maker-label{font-size:11.5px;font-weight:700;color:var(--slate-700);text-transform:uppercase;letter-spacing:.3px}
+    .maker-select{
+      width:100%;padding:10px 12px;border:2px solid var(--slate-200);border-radius:var(--radius-sm);
+      font-family:inherit;font-size:13px;font-weight:600;color:var(--slate-800);background:#fff;outline:none;
+    }
+    .maker-select:focus{border-color:var(--teal-500)}
+    .maker-options-title{font-size:11.5px;font-weight:700;color:var(--slate-700);margin-top:4px}
+    .maker-opt-row{display:flex;align-items:center;gap:8px}
+    .maker-opt-radio{width:18px;height:18px;accent-color:var(--teal-600);cursor:pointer;flex-shrink:0}
+    .maker-opt-tag{font-size:12px;font-weight:800;color:var(--slate-500);width:16px}
+    .maker-opt-input{flex:1;padding:9px 12px;border:1.5px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px}
+    .maker-opt-input:focus{border-color:var(--teal-500);outline:none}
+    .maker-help{font-size:10.5px;color:var(--slate-400);line-height:1.3}
+
+    /* Bank Soal List */
+    .bank-filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+    .bank-filter-chip{
+      padding:6px 12px;background:#fff;border:1px solid var(--slate-200);border-radius:20px;
+      font-size:11px;font-weight:700;color:var(--slate-600);cursor:pointer;white-space:nowrap;
+    }
+    .bank-filter-chip.active{background:var(--teal-700);color:#fff;border-color:var(--teal-700)}
+    .bank-list{display:flex;flex-direction:column;gap:9px}
+    .bank-item{
+      background:#fff;border-radius:14px;padding:12px 14px;border:1px solid var(--slate-200);
+      box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    }
+    .bank-item-body{flex:1}
+    .bank-item-badge{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-bottom:4px}
+    .bank-item-q{font-size:12.5px;font-weight:700;color:var(--slate-900);line-height:1.35}
+    .bank-item-a{font-size:11px;color:var(--teal-700);font-weight:600;margin-top:4px}
+    .bank-item-del{background:transparent;border:none;color:var(--slate-300);cursor:pointer;padding:4px;border-radius:6px}
+    .bank-item-del:hover{color:var(--danger);background:#fee2e2}
+    .bank-item-del svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none}
+
+    /* ── ADMIN MODE & MODAL ── */
+    .header-admin-btn{
+      background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+      color:#fff;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;
+      display:flex;align-items:center;gap:5px;cursor:pointer;transition:all .18s ease;
+      white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;
+    }
+    .header-admin-btn:active{transform:scale(.95)}
+    .header-admin-btn.is-admin{
+      background:#fef08a;color:#854d0e;border-color:#facc15;
+      box-shadow:0 2px 8px rgba(234,179,8,.35);font-weight:800;
+    }
+
+    .admin-modal-overlay{
+      position:fixed;inset:0;background:rgba(15,23,42,.65);backdrop-filter:blur(4px);
+      z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;
+      animation:fadeSlideIn .2s ease both;
+    }
+    .admin-modal-card{
+      background:#fff;border-radius:24px;width:100%;max-width:360px;
+      padding:22px;box-shadow:var(--shadow-lg);border:1px solid var(--slate-200);
+      display:flex;flex-direction:column;gap:14px;animation:modalZoomIn .25s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes modalZoomIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+    .admin-modal-head{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .admin-modal-icon{
+      width:52px;height:52px;border-radius:16px;background:var(--teal-50);
+      border:2px solid var(--teal-300);display:flex;align-items:center;justify-content:center;
+      font-size:26px;color:var(--teal-700);margin-bottom:2px;
+    }
+    .admin-modal-title{font-size:17px;font-weight:800;color:var(--slate-900)}
+    .admin-modal-subtitle{font-size:12px;color:var(--slate-500);line-height:1.45;max-width:300px}
+    .admin-form-group{display:flex;flex-direction:column;gap:5px}
+    .admin-form-label{font-size:11px;font-weight:700;color:var(--slate-700);text-transform:uppercase;letter-spacing:.3px}
+    .admin-input-wrap{position:relative;display:flex;align-items:center}
+    .admin-input-icon{position:absolute;left:12px;font-size:14px;pointer-events:none}
+    .admin-input{
+      width:100%;padding:11px 38px 11px 36px;border:2px solid var(--slate-200);
+      border-radius:12px;font-family:inherit;font-size:13px;font-weight:600;
+      color:var(--slate-900);outline:none;transition:border-color .2s;
+    }
+    .admin-input:focus{border-color:var(--teal-500)}
+    .admin-eye-btn{
+      position:absolute;right:10px;background:transparent;border:none;cursor:pointer;
+      font-size:14px;color:var(--slate-400);padding:4px;
+    }
+    .admin-error-msg{
+      background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;
+      padding:9px 12px;border-radius:10px;font-size:11.5px;font-weight:600;
+      text-align:center;line-height:1.35;
+    }
+    .admin-modal-actions{display:flex;gap:8px;margin-top:4px}
+    .admin-badge-lock{
+      font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;
+      background:#fef2f2;color:#ef4444;margin-left:4px;
+    }
+
+    #toast-container{position:fixed;bottom:calc(var(--nav-height) + 16px);left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast{background:var(--slate-800);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;white-space:nowrap;animation:toastIn .3s cubic-bezier(.34,1.56,.64,1) both;box-shadow:var(--shadow-md)}
+    .toast.out{animation:toastOut .3s ease both}
+    @keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes toastOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-8px) scale(.9)}}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="app-header-icon">🚀</div>
+      <div class="app-header-text">
+        <h1>Productivity Hub</h1>
+        <p id="header-subtitle">Ayo capai targetmu hari ini!</p>
+      </div>
+      <div class="header-date" id="header-date"></div>
+      <button class="header-admin-btn" id="header-admin-btn" title="Mode Akses Pengguna (Klik untuk Login/Keluar Admin)">
+        <span id="header-admin-icon">🔒</span>
+        <span id="header-admin-label">Masuk Admin</span>
+      </button>
+    </header>
+
+    <div class="tab-content-wrapper" id="tab-content-wrapper">
+
+      <!-- TAB 1: TUGAS -->
+      <div class="tab-panel active" id="panel-tasks">
+        <div class="section-header">
+          <div>
+            <div class="section-title">📋 Tugas <span id="task-admin-badge" class="admin-badge-lock">🔒 Khusus Admin</span></div>
+            <div class="section-subtitle" id="task-subtitle">Kelola daftar tugasmu</div>
+          </div>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="task-summary">
+          <div class="task-stat"><div class="task-stat-number" id="stat-total">0</div><div class="task-stat-label">Total</div></div>
+          <div class="task-stat"><div class="task-stat-number" id="stat-done">0</div><div class="task-stat-label">Selesai</div></div>
+          <div class="task-stat"><div class="task-stat-number" id="stat-pending">0</div><div class="task-stat-label">Aktif</div></div>
+        </div>
+
+        <!-- Quick input form -->
+        <div class="add-task-form">
+          <div class="card card-padded add-task-inputs">
+            <!-- Text input row -->
+            <div class="task-input-wrap">
+              <input type="text" id="task-input" class="input-field" placeholder="Nama tugas baru…" maxlength="120" autocomplete="off" />
+              <button class="add-btn" id="add-task-btn" aria-label="Tambah tugas">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+            <!-- Priority pill selector -->
+            <div class="priority-row" id="priority-selector">
+              <button class="priority-chip" data-p="high">🔴 Tinggi</button>
+              <button class="priority-chip selected" data-p="medium">🟡 Sedang</button>
+              <button class="priority-chip" data-p="low">🟢 Rendah</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter: Semua / Aktif / Selesai -->
+        <div class="filter-row" id="filter-row">
+          <div class="filter-row-inner">
+            <button class="filter-chip active" data-f="all">Semua</button>
+            <button class="filter-chip" data-f="active">Aktif</button>
+            <button class="filter-chip" data-f="done">Selesai</button>
+          </div>
+        </div>
+
+        <!-- Task list -->
+        <div class="task-list" id="task-list"></div>
+      </div>
+
+      <!-- TAB 2: FOKUS -->
+      <div class="tab-panel" id="panel-focus">
+        <div class="section-header">
+          <div>
+            <div class="section-title">⏱️ Fokus</div>
+            <div class="section-subtitle">Sesi Pomodoro kamu</div>
+          </div>
+        </div>
+        <div class="focus-panel">
+          <div class="preset-row" id="preset-row">
+            <button class="preset-btn active" data-min="25">🍅 25m</button>
+            <button class="preset-btn" data-min="15">⚡ 15m</button>
+            <button class="preset-btn" data-min="5">☕ 5m</button>
+            <button class="preset-btn" data-min="50">🧠 50m</button>
+          </div>
+          <div class="timer-ring-wrap">
+            <div class="timer-ring-container">
+              <svg class="timer-svg" viewBox="0 0 200 200">
+                <defs>
+                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#0f766e"/>
+                    <stop offset="100%" style="stop-color:#2dd4bf"/>
+                  </linearGradient>
+                </defs>
+                <circle class="timer-track" cx="100" cy="100" r="88"/>
+                <circle class="timer-progress" id="timer-progress" cx="100" cy="100" r="88"/>
+              </svg>
+              <div class="timer-center">
+                <div class="timer-display" id="timer-display">25:00</div>
+                <div class="timer-label" id="timer-mode-label">FOKUS</div>
+              </div>
+            </div>
+          </div>
+          <div class="timer-controls">
+            <button class="timer-btn timer-btn-secondary" id="timer-reset-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.33"/></svg>
+            </button>
+            <button class="timer-btn timer-btn-main" id="timer-start-btn">
+              <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="white"/></svg>
+              <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16" fill="white"/><rect x="14" y="4" width="4" height="16" fill="white"/></svg>
+            </button>
+            <button class="timer-btn timer-btn-secondary" id="timer-skip-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+            </button>
+          </div>
+          <div class="session-card">
+            <h3>Sesi Hari Ini</h3>
+            <div class="session-dots" id="session-dots"></div>
+            <div class="focus-stats">
+              <div class="focus-stat"><div class="focus-stat-num" id="stat-sessions">0</div><div class="focus-stat-label">Sesi Selesai</div></div>
+              <div class="focus-stat"><div class="focus-stat-num" id="stat-focus-time">0m</div><div class="focus-stat-label">Waktu Fokus</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: JURNAL -->
+      <div class="tab-panel" id="panel-journal">
+        <div class="section-header">
+          <div>
+            <div class="section-title">📓 Jurnal</div>
+            <div class="section-subtitle">Catatan perasaan harianmu</div>
+          </div>
+        </div>
+        <div class="journal-panel">
+          <div class="mood-selector">
+            <h3>Perasaan Kamu Hari Ini?</h3>
+            <div class="mood-row" id="mood-row">
+              <button class="mood-btn" data-mood="😄">😄<span class="mood-label">Bahagia</span></button>
+              <button class="mood-btn" data-mood="😊">😊<span class="mood-label">Oke</span></button>
+              <button class="mood-btn" data-mood="😐">😐<span class="mood-label">Biasa</span></button>
+              <button class="mood-btn" data-mood="😔">😔<span class="mood-label">Sedih</span></button>
+              <button class="mood-btn" data-mood="😤">😤<span class="mood-label">Marah</span></button>
+            </div>
+          </div>
+          <div class="journal-compose">
+            <h3>Tulis Catatanmu</h3>
+            <textarea id="journal-input" class="journal-input" placeholder="Apa yang kamu rasakan atau pikirkan hari ini?…" maxlength="500"></textarea>
+            <div class="journal-char-count"><span id="journal-char">0</span>/500</div>
+            <div class="journal-save-row">
+              <button class="btn btn-primary" id="save-journal-btn" style="padding:10px 22px;font-size:13px;">💾 Simpan Catatan</button>
+            </div>
+          </div>
+          <div class="journal-entries" id="journal-entries"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: KUIS PELAJARAN -->
+      <div class="tab-panel" id="panel-quiz">
+        <div class="quiz-panel">
+          
+          <!-- VIEW 1: PILIH MATA PELAJARAN (HOME) -->
+          <div class="quiz-view active" id="quiz-view-home">
+            <div class="quiz-hero-card">
+              <div class="quiz-hero-badge" id="quiz-hero-badge">🎓 Mode Pengunjung</div>
+              <div class="quiz-hero-title">Kuis Mata Pelajaran</div>
+              <div class="quiz-hero-desc" id="quiz-hero-desc">Pilih mapel untuk latihan efektif dengan pembahasan instan atau buat soal kustommu!</div>
+              <div class="quiz-top-actions">
+                <button class="quiz-action-pill" id="btn-open-maker">
+                  <span id="maker-btn-icon">🔒</span> <span id="maker-btn-text">Buat Soal (Admin)</span>
+                </button>
+                <button class="quiz-action-pill" id="btn-open-bank">
+                  <span>📑</span> Bank Soal
+                </button>
+              </div>
+            </div>
+
+            <div class="subject-section-head">
+              <div class="subject-section-title">Pilih Mata Pelajaran</div>
+            </div>
+
+            <!-- Subject Grid Cards -->
+            <div class="subject-grid" id="subject-grid">
+              <!-- Matematika -->
+              <div class="subject-card" data-subj="matematika">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">📐</div>
+                  <span class="subject-count-pill" id="count-matematika">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">Matematika</div>
+                  <div class="subject-score-text" id="score-matematika">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- IPA -->
+              <div class="subject-card" data-subj="ipa">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">🔬</div>
+                  <span class="subject-count-pill" id="count-ipa">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">IPA / Sains</div>
+                  <div class="subject-score-text" id="score-ipa">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- IPS -->
+              <div class="subject-card" data-subj="ips">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">🌍</div>
+                  <span class="subject-count-pill" id="count-ips">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">IPS / Sosial</div>
+                  <div class="subject-score-text" id="score-ips">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- Bahasa Indonesia -->
+              <div class="subject-card" data-subj="bindonesia">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">🇮🇩</div>
+                  <span class="subject-count-pill" id="count-bindonesia">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">B. Indonesia</div>
+                  <div class="subject-score-text" id="score-bindonesia">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- Bahasa Inggris -->
+              <div class="subject-card" data-subj="binggris">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">🇬🇧</div>
+                  <span class="subject-count-pill" id="count-binggris">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">B. Inggris</div>
+                  <div class="subject-score-text" id="score-binggris">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- Informatika -->
+              <div class="subject-card" data-subj="informatika">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap">💻</div>
+                  <span class="subject-count-pill" id="count-informatika">0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">Informatika</div>
+                  <div class="subject-score-text" id="score-informatika">Belum ada skor</div>
+                </div>
+              </div>
+
+              <!-- All Subjects Mix -->
+              <div class="subject-card all-mix" data-subj="all">
+                <div class="subject-card-top">
+                  <div class="subject-icon-wrap" style="background:#f0fdfa;color:var(--teal-700)">🎯</div>
+                  <span class="subject-count-pill" id="count-all">Total 0 soal</span>
+                </div>
+                <div>
+                  <div class="subject-name">Kuis Campuran Acak (Semua Mapel)</div>
+                  <div class="subject-score-text" id="score-all">Uji kemampuan komprehensifmu</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW 2: PLAYING QUIZ -->
+          <div class="quiz-view" id="quiz-view-play">
+            <div class="quiz-nav-bar">
+              <button class="quiz-back-btn" id="btn-quiz-exit" title="Kembali ke Mapel">✕</button>
+              <div class="quiz-subject-indicator">
+                <span id="quiz-curr-icon">📐</span>
+                <span id="quiz-curr-subj-name">Matematika</span>
+              </div>
+              <div class="quiz-progress-text" id="quiz-q-counter">Soal 1/5</div>
+            </div>
+
+            <div class="quiz-progress-bar-wrap">
+              <div class="quiz-progress-fill" id="quiz-progress-bar"></div>
+            </div>
+
+            <div class="quiz-question-box">
+              <span class="quiz-q-topic" id="quiz-q-topic">Mata Pelajaran</span>
+              <div class="quiz-q-text" id="quiz-q-text">Pertanyaan akan muncul di sini...</div>
+            </div>
+
+            <div class="quiz-options-group" id="quiz-options-container">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Instant Educational Explanation -->
+            <div class="quiz-explanation-card" id="quiz-explanation-card" style="display:none;">
+              <div class="quiz-exp-title">💡 Pembahasan & Penjelasan</div>
+              <div class="quiz-exp-body" id="quiz-explanation-text"></div>
+            </div>
+
+            <div class="quiz-next-action" id="quiz-next-wrap" style="display:none;">
+              <button class="btn-quiz-next" id="btn-quiz-next">
+                <span>Soal Selanjutnya</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- VIEW 3: QUIZ RESULT -->
+          <div class="quiz-view" id="quiz-view-result">
+            <div class="quiz-result-card">
+              <div class="result-score-circle">
+                <div class="result-score-val" id="result-score-val">0</div>
+                <div class="result-score-max">Skor / 100</div>
+              </div>
+              <div class="result-feedback-title" id="result-title">Selesai!</div>
+              <div class="result-feedback-desc" id="result-desc">Kamu telah menyelesaikan latihan kuis ini.</div>
+
+              <div class="result-stats-grid">
+                <div class="result-stat-card">
+                  <div class="result-stat-card-val" id="res-stat-correct" style="color:#10b981">0</div>
+                  <div class="result-stat-card-lbl">Benar</div>
+                </div>
+                <div class="result-stat-card">
+                  <div class="result-stat-card-val" id="res-stat-wrong" style="color:var(--danger)">0</div>
+                  <div class="result-stat-card-lbl">Salah</div>
+                </div>
+                <div class="result-stat-card">
+                  <div class="result-stat-card-val" id="res-stat-accuracy" style="color:var(--teal-700)">0%</div>
+                  <div class="result-stat-card-lbl">Akurasi</div>
+                </div>
+              </div>
+
+              <div class="result-actions">
+                <button class="btn btn-primary" id="btn-retake-quiz" style="width:100%;border-radius:12px;padding:12px;">🔄 Ulangi Kuis</button>
+                <button class="btn btn-secondary" id="btn-back-subjects" style="width:100%;border-radius:12px;padding:12px;">📚 Pilih Mata Pelajaran Lain</button>
+              </div>
+            </div>
+
+            <!-- Review questions list -->
+            <div class="quiz-review-section">
+              <div class="quiz-review-head">🔍 Ringkasan & Pembahasan Soal</div>
+              <div id="quiz-review-list"></div>
+            </div>
+          </div>
+
+          <!-- VIEW 4: QUIZ MAKER FORM (CREATE CUSTOM QUESTION) -->
+          <div class="quiz-view" id="quiz-view-create">
+            <div class="quiz-nav-bar">
+              <button class="quiz-back-btn" id="btn-cancel-maker">←</button>
+              <div class="quiz-subject-indicator">
+                <span>➕</span>
+                <span>Buat Soal Kuis Baru</span>
+              </div>
+              <div></div>
+            </div>
+
+            <div class="maker-card">
+              <!-- Select Subject -->
+              <div class="maker-field">
+                <label class="maker-label">Mata Pelajaran</label>
+                <select class="maker-select" id="maker-subject">
+                  <option value="matematika">📐 Matematika</option>
+                  <option value="ipa">🔬 IPA / Sains</option>
+                  <option value="ips">🌍 IPS / Sosial</option>
+                  <option value="bindonesia">🇮🇩 Bahasa Indonesia</option>
+                  <option value="binggris">🇬🇧 Bahasa Inggris</option>
+                  <option value="informatika">💻 Informatika / TIK</option>
+                </select>
+              </div>
+
+              <!-- Question text -->
+              <div class="maker-field">
+                <label class="maker-label">Pertanyaan Soal</label>
+                <textarea id="maker-question" class="input-field" rows="3" placeholder="Tuliskan pertanyaan dengan jelas…" maxlength="300"></textarea>
+              </div>
+
+              <!-- 4 Options -->
+              <div class="maker-options-title">Pilihan Jawaban (Tandai Kunci yang Benar)</div>
+              
+              <div class="maker-opt-row">
+                <input type="radio" name="maker-correct" value="0" class="maker-opt-radio" id="radio-opt-0" checked />
+                <span class="maker-opt-tag">A</span>
+                <input type="text" class="maker-opt-input" id="maker-opt-0" placeholder="Pilihan A" maxlength="120" />
+              </div>
+
+              <div class="maker-opt-row">
+                <input type="radio" name="maker-correct" value="1" class="maker-opt-radio" id="radio-opt-1" />
+                <span class="maker-opt-tag">B</span>
+                <input type="text" class="maker-opt-input" id="maker-opt-1" placeholder="Pilihan B" maxlength="120" />
+              </div>
+
+              <div class="maker-opt-row">
+                <input type="radio" name="maker-correct" value="2" class="maker-opt-radio" id="radio-opt-2" />
+                <span class="maker-opt-tag">C</span>
+                <input type="text" class="maker-opt-input" id="maker-opt-2" placeholder="Pilihan C" maxlength="120" />
+              </div>
+
+              <div class="maker-opt-row">
+                <input type="radio" name="maker-correct" value="3" class="maker-opt-radio" id="radio-opt-3" />
+                <span class="maker-opt-tag">D</span>
+                <input type="text" class="maker-opt-input" id="maker-opt-3" placeholder="Pilihan D" maxlength="120" />
+              </div>
+
+              <!-- Explanation / Discussion -->
+              <div class="maker-field" style="margin-top:6px;">
+                <label class="maker-label">💡 Pembahasan / Tips Solusi (Efektif untuk belajar)</label>
+                <textarea id="maker-explanation" class="input-field" rows="2" placeholder="Jelaskan alasan mengapa jawaban tersebut benar…" maxlength="250"></textarea>
+                <div class="maker-help">Pembahasan akan ditampilkan kepada murid setelah menjawab agar pemahaman konsep lebih mantap.</div>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:8px;">
+                <button class="btn btn-secondary" id="btn-cancel-maker-2" style="flex:1;">Batal</button>
+                <button class="btn btn-primary" id="btn-save-quiz-question" style="flex:2;">💾 Simpan Soal</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW 5: MANAGE QUESTION BANK -->
+          <div class="quiz-view" id="quiz-view-bank">
+            <div class="quiz-nav-bar">
+              <button class="quiz-back-btn" id="btn-close-bank">←</button>
+              <div class="quiz-subject-indicator">
+                <span>📑</span>
+                <span>Bank Soal Pelajaran</span>
+              </div>
+              <button class="btn btn-secondary" id="btn-bank-add" style="padding:6px 10px;font-size:11px;">➕ Buat</button>
+            </div>
+
+            <!-- Subject filter chips -->
+            <div class="bank-filter-row" id="bank-filters">
+              <button class="bank-filter-chip active" data-filter="all">Semua Mapel</button>
+              <button class="bank-filter-chip" data-filter="matematika">📐 Matematika</button>
+              <button class="bank-filter-chip" data-filter="ipa">🔬 IPA</button>
+              <button class="bank-filter-chip" data-filter="ips">🌍 IPS</button>
+              <button class="bank-filter-chip" data-filter="bindonesia">🇮🇩 B. Indonesia</button>
+              <button class="bank-filter-chip" data-filter="binggris">🇬🇧 B. Inggris</button>
+              <button class="bank-filter-chip" data-filter="informatika">💻 Informatika</button>
+            </div>
+
+            <!-- List of Questions -->
+            <div class="bank-list" id="bank-list"></div>
+
+            <div style="text-align:center;padding:12px 0;">
+              <button class="btn btn-secondary" id="btn-reset-default-bank" style="font-size:11px;color:var(--slate-500);">
+                🔄 Pulihkan Soal Bawaan Standar
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- end tab-content-wrapper -->
+
+    <nav class="bottom-nav" role="navigation" aria-label="Navigasi Utama">
+      <button class="nav-tab active" id="nav-tasks" data-tab="tasks" aria-label="Tab Tugas">
+        <div class="nav-tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <span class="nav-label">Tugas</span>
+      </button>
+      <button class="nav-tab" id="nav-focus" data-tab="focus" aria-label="Tab Fokus">
+        <div class="nav-tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <span class="nav-label">Fokus</span>
+      </button>
+      <button class="nav-tab" id="nav-journal" data-tab="journal" aria-label="Tab Jurnal">
+        <div class="nav-tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/>
+          </svg>
+        </div>
+        <span class="nav-label">Jurnal</span>
+      </button>
+      <button class="nav-tab" id="nav-quiz" data-tab="quiz" aria-label="Tab Kuis">
+        <div class="nav-tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="nav-label">Kuis</span>
+      </button>
+    </nav>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div class="admin-modal-overlay" id="admin-modal-overlay" style="display:none;">
+      <div class="admin-modal-card">
+        <div class="admin-modal-head">
+          <div class="admin-modal-icon">🛡️</div>
+          <div class="admin-modal-title">Akses Khusus Admin</div>
+          <div class="admin-modal-subtitle" id="admin-modal-reason">Hanya admin yang berhak mengubah isi dan soal kuis pada web ini.</div>
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label">Nama Pengguna (Username)</label>
+          <div class="admin-input-wrap">
+            <span class="admin-input-icon">👤</span>
+            <input type="text" id="admin-user-input" class="admin-input" placeholder="Nama admin (admin)" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Kata Sandi (Password)</label>
+          <div class="admin-input-wrap">
+            <span class="admin-input-icon">🔑</span>
+            <input type="password" id="admin-pass-input" class="admin-input" placeholder="Password admin (admin123)" />
+            <button type="button" class="admin-eye-btn" id="btn-toggle-pass" title="Tampilkan sandi">👁️</button>
+          </div>
+        </div>
+
+        <div class="admin-error-msg" id="admin-error-msg" style="display:none;"></div>
+
+        <div class="admin-modal-actions">
+          <button class="btn btn-secondary" id="btn-close-admin-modal" style="flex:1;border-radius:12px;">Batal</button>
+          <button class="btn btn-primary" id="btn-submit-admin" style="flex:2;border-radius:12px;">🔓 Masuk Admin</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN STATUS / LOGOUT MODAL -->
+    <div class="admin-modal-overlay" id="admin-status-overlay" style="display:none;">
+      <div class="admin-modal-card">
+        <div class="admin-modal-head">
+          <div class="admin-modal-icon" style="background:#fef08a;color:#854d0e;">👑</div>
+          <div class="admin-modal-title">Mode Admin Aktif</div>
+          <div class="admin-modal-subtitle">Anda sedang login sebagai <strong>admin</strong>. Anda memiliki izin penuh untuk mengedit, menambah, dan menghapus soal kuis.</div>
+        </div>
+        <div style="background:var(--slate-50);border-radius:12px;padding:12px;font-size:12px;color:var(--slate-600);line-height:1.5;">
+          💡 <strong>Hak Akses Admin:</strong>
+          <ul style="padding-left:18px;margin-top:6px;display:flex;flex-direction:column;gap:3px;">
+            <li>Membuat soal kuis baru untuk semua mata pelajaran</li>
+            <li>Menghapus soal dari Bank Soal</li>
+            <li>Mereset bank soal ke pengaturan standar</li>
+          </ul>
+        </div>
+        <div class="admin-modal-actions">
+          <button class="btn btn-secondary" id="btn-close-admin-status" style="flex:1;border-radius:12px;">Tutup</button>
+          <button class="btn btn-primary" id="btn-logout-admin" style="flex:1;background:var(--danger);box-shadow:0 4px 14px rgba(239,68,68,.3);border-radius:12px;">🚪 Keluar Admin</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div id="toast-container"></div>
+
+  <script>
+  (function(){
+    'use strict';
+    var $ = function(s,c){return (c||document).querySelector(s);};
+    var $$ = function(s,c){return Array.from((c||document).querySelectorAll(s));};
+    function save(k,v){try{localStorage.setItem('ph_'+k,JSON.stringify(v));}catch(e){}}
+    function load(k,d){try{var v=localStorage.getItem('ph_'+k);return v!==null?JSON.parse(v):d;}catch(e){return d;}}
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+    function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function toast(msg,dur){
+      dur=dur||2200;
+      var el=document.createElement('div');
+      el.className='toast';el.textContent=msg;
+      $('#toast-container').appendChild(el);
+      setTimeout(function(){el.classList.add('out');el.addEventListener('animationend',function(){el.remove();});},dur);
+    }
+    function fmt(secs){return String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0');}
+    function shortDate(ts){return new Date(ts).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});}
+    function timeStr(ts){return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+    function todayKey(){return new Date().toISOString().slice(0,10);}
+
+    // HEADER GREETING
+    (function(){
+      var h=new Date().getHours();
+      var g=h<5?'Tengah malam! 🌃':h<12?'Selamat pagi! ☀️':h<17?'Selamat siang! 🌤️':h<21?'Selamat sore! 🌇':'Selamat malam! 🌙';
+      var sub = $('#header-subtitle');
+      if(sub) sub.textContent=g;
+      var dt = $('#header-date');
+      if(dt) dt.textContent=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+    })();
+
+    // TABS
+    var navTabs=$$('.nav-tab');
+    var panels={
+      tasks:$('#panel-tasks'),
+      focus:$('#panel-focus'),
+      journal:$('#panel-journal'),
+      quiz:$('#panel-quiz')
+    };
+    function switchTab(name){
+      navTabs.forEach(function(t){t.classList.toggle('active',t.dataset.tab===name);});
+      Object.keys(panels).forEach(function(n){if(panels[n])panels[n].classList.toggle('active',n===name);});
+      $('#tab-content-wrapper').scrollTop=0;
+    }
+    navTabs.forEach(function(b){b.addEventListener('click',function(){switchTab(b.dataset.tab);});});
+
+    // === TASKS ===
+    var tasks=load('tasks',[]);
+    var selPriority='medium'; // default: Sedang
+    var activeFilter='all';
+
+    // Priority pill interaction
+    $$('.priority-chip').forEach(function(c){
+      c.addEventListener('click',function(){
+        if(!isAdmin){
+          openAdminModal('Hanya Admin yang dapat mengatur prioritas tugas.');
+          return;
+        }
+        $$('.priority-chip').forEach(function(x){x.classList.remove('selected');});
+        c.classList.add('selected');
+        selPriority=c.dataset.p;
+      });
+    });
+
+    // Filter tab interaction
+    $$('.filter-chip').forEach(function(c){
+      c.addEventListener('click',function(){
+        $$('.filter-chip').forEach(function(x){x.classList.remove('active');});
+        c.classList.add('active');
+        activeFilter=c.dataset.f;
+        renderTasks();
+      });
+    });
+
+    function getFiltered(){
+      if(activeFilter==='all')  return tasks;
+      if(activeFilter==='active')return tasks.filter(function(t){return !t.done;});
+      if(activeFilter==='done') return tasks.filter(function(t){return t.done;});
+      return tasks;
+    }
+
+    function priorityLabel(p){
+      return p==='high'?'Tinggi':p==='medium'?'Sedang':'Rendah';
+    }
+
+    function renderTasks(){
+      var list=getFiltered();
+      var el=$('#task-list');
+      if(!el) return;
+      el.innerHTML='';
+
+      // Update stats
+      var statTotal = $('#stat-total');
+      var statDone = $('#stat-done');
+      var statPending = $('#stat-pending');
+      if(statTotal) statTotal.textContent=tasks.length;
+      var doneCount=tasks.filter(function(t){return t.done;}).length;
+      if(statDone) statDone.textContent=doneCount;
+      if(statPending) statPending.textContent=tasks.length-doneCount;
+
+      if(!list.length){
+        var msg=activeFilter==='done'
+          ?'Belum ada tugas yang selesai.'
+          :activeFilter==='active'
+          ?'Semua tugas sudah selesai! 🎉'
+          :(isAdmin ? 'Belum ada tugas. Tambahkan tugas pertamamu di atas!' : 'Belum ada tugas resmi dari Admin.');
+        el.innerHTML='<div class="empty-state"><div class="empty-icon">'+(activeFilter==='done'?'🏆':'✅')+'</div><p>'+msg+'</p></div>';
+        return;
+      }
+
+      list.forEach(function(t){
+        var card=document.createElement('div');
+        card.className='task-item pri-'+(t.priority||'medium')+(t.done?' done':'');
+
+        var deleteBtnHtml = isAdmin
+          ? '<button class="task-delete" aria-label="Hapus tugas">'+
+              '<svg viewBox="0 0 24 24">'+
+                '<polyline points="3 6 5 6 21 6"/>'+
+                '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>'+
+                '<path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'+
+              '</svg>'+
+            '</button>'
+          : '';
+
+        // Build inner HTML
+        card.innerHTML=
+          '<div class="task-inner">'+
+            '<button class="task-check'+(t.done?' checked':'')+'" aria-label="Tandai selesai" title="'+(isAdmin?'Ubah status tugas':'Hanya Admin yang dapat mengubah status')+'">'+
+              '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'+
+            '</button>'+
+            '<div class="task-info">'+
+              '<div class="task-text">'+escHtml(t.text || t.title || 'Tugas')+'</div>'+
+              '<div class="task-meta">'+
+                '<span class="task-meta-tag tag-'+(t.priority||'medium')+'">'+priorityLabel(t.priority)+'</span>'+
+                '<span class="task-meta-tag tag-date">'+shortDate(t.createdAt)+'</span>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+          deleteBtnHtml;
+
+        // Events (closure-safe)
+        (function(taskId){
+          card.querySelector('.task-check').addEventListener('click',function(e){
+            e.stopPropagation();
+            if(!isAdmin){
+              openAdminModal('Hanya Admin yang dapat mengubah status selesai tugas.');
+              return;
+            }
+            toggleTask(taskId);
+          });
+          if(isAdmin){
+            var delBtn = card.querySelector('.task-delete');
+            if(delBtn){
+              delBtn.addEventListener('click',function(e){
+                e.stopPropagation();
+                deleteTask(taskId);
+              });
+            }
+          }
+        })(t.id);
+
+        el.appendChild(card);
+      });
+    }
+
+    function addTask(){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat menambah tugas baru.');
+        return;
+      }
+      var inp=$('#task-input');
+      var text=inp.value.trim();
+      if(!text){toast('⚠️ Ketik nama tugas terlebih dahulu!');return;}
+      tasks.unshift({id:uid(),text:text,title:text,priority:selPriority,done:false,createdAt:Date.now()});
+      save('tasks',tasks);
+      inp.value='';
+      renderTasks();
+      toast('✅ Tugas berhasil ditambahkan!');
+    }
+
+    function toggleTask(id){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat mengubah status tugas.');
+        return;
+      }
+      var t=tasks.find(function(x){return x.id===id;});
+      if(!t)return;
+      t.done=!t.done;
+      save('tasks',tasks);
+      renderTasks();
+      if(t.done) toast('🎉 Kerja bagus! Tugas selesai.');
+    }
+
+    function deleteTask(id){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat menghapus tugas.');
+        return;
+      }
+      tasks=tasks.filter(function(x){return x.id!==id;});
+      save('tasks',tasks);
+      renderTasks();
+      toast('🗑️ Tugas dihapus.');
+    }
+
+    $('#add-task-btn').addEventListener('click',addTask);
+    $('#task-input').addEventListener('keydown',function(e){if(e.key==='Enter')addTask();});
+    $('#task-input').addEventListener('click',function(){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat menambah tugas baru.');
+      }
+    });
+    renderTasks();
+
+    // === FOCUS TIMER ===
+    var CIRC=2*Math.PI*88;
+    var timerDur=25*60,timerRem=25*60,timerRun=false,timerInt=null,isBreak=false;
+    var focusData=load('focus_today',{date:todayKey(),sessions:0,minutes:0});
+    if(focusData.date!==todayKey()){focusData={date:todayKey(),sessions:0,minutes:0};save('focus_today',focusData);}
+
+    var progressEl=$('#timer-progress');
+    progressEl.style.strokeDasharray=CIRC;
+    progressEl.style.strokeDashoffset=0;
+
+    function updateTimerUI(){
+      $('#timer-display').textContent=fmt(timerRem);
+      progressEl.style.strokeDashoffset=CIRC*(1-timerRem/timerDur);
+      document.title=timerRun?'('+fmt(timerRem)+') Productivity Hub':'Productivity Hub';
+    }
+
+    function updateSessionUI(){
+      var dots=$('#session-dots');dots.innerHTML='';
+      var total=Math.max(4,focusData.sessions+1);
+      for(var i=0;i<total;i++){
+        var d=document.createElement('div');
+        d.className='session-dot'+(i<focusData.sessions?' done':'');
+        dots.appendChild(d);
+      }
+      $('#stat-sessions').textContent=focusData.sessions;
+      $('#stat-focus-time').textContent=focusData.minutes+'m';
+    }
+    updateSessionUI();
+
+    $$('.preset-btn').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(timerRun)return;
+        $$('.preset-btn').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        timerDur=parseInt(b.dataset.min)*60;timerRem=timerDur;
+        isBreak=false;$('#timer-mode-label').textContent='FOKUS';updateTimerUI();
+      });
+    });
+
+    function startTimer(){
+      timerRun=true;$('#play-icon').style.display='none';$('#pause-icon').style.display='block';
+      timerInt=setInterval(function(){
+        if(timerRem<=0){clearInterval(timerInt);timerRun=false;sessionDone();return;}
+        timerRem--;updateTimerUI();
+      },1000);
+    }
+    function pauseTimer(){
+      timerRun=false;clearInterval(timerInt);
+      $('#play-icon').style.display='block';$('#pause-icon').style.display='none';
+    }
+    function resetTimer(){pauseTimer();timerRem=timerDur;updateTimerUI();}
+
+    function sessionDone(){
+      $('#play-icon').style.display='block';$('#pause-icon').style.display='none';
+      if(!isBreak){
+        var mins=Math.round(timerDur/60);
+        focusData.sessions++;focusData.minutes+=mins;save('focus_today',focusData);updateSessionUI();
+        toast('🍅 Sesi '+mins+'m selesai! Istirahat sejenak.');
+        isBreak=true;timerDur=5*60;timerRem=timerDur;$('#timer-mode-label').textContent='ISTIRAHAT';
+        $$('.preset-btn').forEach(function(x){x.classList.remove('active');});
+      }else{
+        toast('☕ Istirahat selesai! Siap fokus lagi?');
+        isBreak=false;timerDur=25*60;timerRem=timerDur;$('#timer-mode-label').textContent='FOKUS';
+        $$('.preset-btn').forEach(function(x){x.classList.remove('active');});
+        var def=document.querySelector('[data-min="25"]');if(def)def.classList.add('active');
+      }
+      updateTimerUI();
+      if('vibrate' in navigator)navigator.vibrate([200,100,200]);
+    }
+
+    $('#timer-start-btn').addEventListener('click',function(){timerRun?pauseTimer():startTimer();});
+    $('#timer-reset-btn').addEventListener('click',resetTimer);
+    $('#timer-skip-btn').addEventListener('click',function(){pauseTimer();timerRem=0;sessionDone();});
+    updateTimerUI();
+
+    // === JOURNAL ===
+    var journals=load('journals',[]);
+    var selMood='😊';
+
+    $$('.mood-btn').forEach(function(b){
+      b.addEventListener('click',function(){
+        $$('.mood-btn').forEach(function(x){x.classList.remove('selected');});
+        b.classList.add('selected');selMood=b.dataset.mood;
+      });
+    });
+
+    var jInp=$('#journal-input');
+    jInp.addEventListener('input',function(){$('#journal-char').textContent=jInp.value.length;});
+
+    function saveJournal(){
+      var text=jInp.value.trim();if(!text){toast('⚠️ Tulis catatan terlebih dahulu!');return;}
+      journals.unshift({id:uid(),text:text,mood:selMood,createdAt:Date.now()});
+      save('journals',journals);jInp.value='';$('#journal-char').textContent='0';
+      renderJournal();toast('📓 Catatan tersimpan!');
+    }
+    function deleteJournal(id){journals=journals.filter(function(x){return x.id!==id;});save('journals',journals);renderJournal();toast('🗑️ Catatan dihapus.');}
+
+    function renderJournal(){
+      var cont=$('#journal-entries');
+      if(!journals.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">📖</div><p>Belum ada catatan. Mulai tulis sekarang!</p></div>';return;}
+      var groups={};
+      journals.forEach(function(j){var k=shortDate(j.createdAt);if(!groups[k])groups[k]=[];groups[k].push(j);});
+      cont.innerHTML='';
+      Object.keys(groups).forEach(function(date){
+        var entries=groups[date];
+        var grp=document.createElement('div');grp.className='journal-day-group';
+        grp.innerHTML='<div class="journal-day-label">'+date+'</div>';
+        entries.forEach(function(j){
+          var card=document.createElement('div');card.className='journal-entry-card';
+          card.innerHTML='<div class="journal-entry-header"><div class="journal-entry-meta"><span class="journal-entry-mood">'+j.mood+'</span><span class="journal-entry-time">'+timeStr(j.createdAt)+'</span></div>'
+            +'<button class="journal-entry-delete" data-id="'+j.id+'"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>'
+            +'<div class="journal-entry-text">'+escHtml(j.text).replace(/\n/g,'<br>')+'</div>';
+          card.querySelector('.journal-entry-delete').addEventListener('click',function(){deleteJournal(j.id);});
+          grp.appendChild(card);
+        });
+        cont.appendChild(grp);
+      });
+    }
+
+    $('#save-journal-btn').addEventListener('click',saveJournal);
+    renderJournal();
+
+    // ==========================================
+    // === TAB 4: SMART QUIZ MAKER & SUBJECTS ===
+    // ==========================================
+
+    var subjectMeta = {
+      matematika: { name: 'Matematika', icon: '📐', color: '#2563eb' },
+      ipa:        { name: 'IPA / Sains', icon: '🔬', color: '#059669' },
+      ips:        { name: 'IPS / Sosial', icon: '🌍', color: '#d97706' },
+      bindonesia: { name: 'Bahasa Indonesia', icon: '🇮🇩', color: '#dc2626' },
+      binggris:   { name: 'Bahasa Inggris', icon: '🇬🇧', color: '#7c3aed' },
+      informatika:{ name: 'Informatika / TIK', icon: '💻', color: '#0891b2' },
+      all:        { name: 'Semua Mapel (Campuran)', icon: '🎯', color: '#0f766e' }
+    };
+
+    var defaultQuestionBank = [
+      // Matematika
+      {
+        id: 'math_1',
+        subject: 'matematika',
+        topic: 'Aljabar Dasar',
+        question: 'Jika 2x + 7 = 19, berapakah nilai dari x?',
+        options: ['4', '6', '5', '7'],
+        answer: 1,
+        explanation: 'Kurangkan kedua sisi dengan 7: 2x = 19 - 7 = 12. Lalu bagi 2: x = 12 / 2 = 6.'
+      },
+      {
+        id: 'math_2',
+        subject: 'matematika',
+        topic: 'Geometri / Pythagoras',
+        question: 'Sebuah segitiga siku-siku memiliki sisi tegak 5 cm dan 12 cm. Berapakah panjang sisi miringnya?',
+        options: ['13 cm', '15 cm', '17 cm', '14 cm'],
+        answer: 0,
+        explanation: 'Gunakan Teorema Pythagoras: c² = 5² + 12² = 25 + 144 = 169. Jadi c = √169 = 13 cm.'
+      },
+      {
+        id: 'math_3',
+        subject: 'matematika',
+        topic: 'Aritmatika & Persen',
+        question: 'Berapakah 25% dari 160?',
+        options: ['35', '40', '45', '50'],
+        answer: 1,
+        explanation: '25% sama dengan 1/4 bagian. 160 dibagi 4 adalah 40.'
+      },
+      {
+        id: 'math_4',
+        subject: 'matematika',
+        topic: 'Teori Bilangan / FPB',
+        question: 'Faktor Persekutuan Terbesar (FPB) dari 24 dan 36 adalah...',
+        options: ['6', '8', '12', '18'],
+        answer: 2,
+        explanation: 'Faktor 24: 1, 2, 3, 4, 6, 8, 12, 24. Faktor 36: 1, 2, 3, 4, 6, 9, 12, 18, 36. Faktor persekutuan terbesar yang sama adalah 12.'
+      },
+      {
+        id: 'math_5',
+        subject: 'matematika',
+        topic: 'Sudut & Bangun Datar',
+        question: 'Jumlah seluruh sudut bagian dalam pada sebuah segitiga sembarang adalah...',
+        options: ['90°', '180°', '270°', '360°'],
+        answer: 1,
+        explanation: 'Dalam geometri Euclidean, jumlah ketiga sudut dalam setiap bangun segitiga selalu tepat 180°.'
+      },
+
+      // IPA / Sains
+      {
+        id: 'ipa_1',
+        subject: 'ipa',
+        topic: 'Biologi / Tumbuhan',
+        question: 'Gas apakah yang dihasilkan oleh tumbuhan sebagai produk akhir proses fotosintesis?',
+        options: ['Karbondioksida (CO₂)', 'Nitrogen (N₂)', 'Oksigen (O₂)', 'Karbonmonoksida (CO)'],
+        answer: 2,
+        explanation: 'Tumbuhan menyerap air (H₂O) dan CO₂ dibantu klorofil & sinar matahari, menghasilkan glukosa dan melepaskan Oksigen (O₂).'
+      },
+      {
+        id: 'ipa_2',
+        subject: 'ipa',
+        topic: 'Fisiologi Manusia',
+        question: 'Bagian jantung yang bertugas memompa darah kaya oksigen ke seluruh tubuh adalah...',
+        options: ['Serambi Kanan', 'Bilik Kiri (Ventrikel Kiri)', 'Bilik Kanan', 'Serambi Kiri'],
+        answer: 1,
+        explanation: 'Bilik kiri memiliki otot dinding paling tebal karena harus menghasilkan tekanan kuat memompa darah bersih ke seluruh tubuh via aorta.'
+      },
+      {
+        id: 'ipa_3',
+        subject: 'ipa',
+        topic: 'Fisika / Zat & Wujud',
+        question: 'Peristiwa perubahan wujud zat dari gas langsung menjadi padat disebut...',
+        options: ['Mengembun', 'Menyublim', 'Mengkristal / Deposisi', 'Membeku'],
+        answer: 2,
+        explanation: 'Deposisi/mengkristal adalah perubahan wujud dari gas langsung ke padat tanpa mencair terlebih dahulu (contoh: pembentukan salju).'
+      },
+      {
+        id: 'ipa_4',
+        subject: 'ipa',
+        topic: 'Astronomi',
+        question: 'Planet terbesar di dalam tata surya kita adalah...',
+        options: ['Saturnus', 'Jupiter', 'Neptunus', 'Bumi'],
+        answer: 1,
+        explanation: 'Jupiter memiliki diameter sekitar 139.820 km, lebih dari 11 kali ukuran Bumi, menjadikannya planet terbesar di tata surya.'
+      },
+      {
+        id: 'ipa_5',
+        subject: 'ipa',
+        topic: 'Fisika / Gaya & Gerak',
+        question: 'Berdasarkan Hukum II Newton (F = m × a), jika gaya tetap namun massa diperbesar 2 kali lipat, maka percepatannya akan...',
+        options: ['Menjadi 2 kali lipat', 'Menjadi setengahnya', 'Tetap sama', 'Menjadi nol'],
+        answer: 1,
+        explanation: 'Percepatan berbanding terbalik dengan massa (a = F / m). Jika massa naik 2x lipat, percepatan menjadi setengah (1/2).'
+      },
+
+      // IPS / Sosial
+      {
+        id: 'ips_1',
+        subject: 'ips',
+        topic: 'Sejarah Kemerdekaan',
+        question: 'Tokoh pahlawan nasional yang bertugas mengetik naskah resmi Proklamasi Kemerdekaan Indonesia adalah...',
+        options: ['Sayuti Melik', 'Sukarni', 'B.M. Diah', 'Chaerul Saleh'],
+        answer: 0,
+        explanation: 'Sayuti Melik mengetik naskah proklamasi yang telah disepakati oleh Soekarno dan Hatta di rumah Laksamana Maeda.'
+      },
+      {
+        id: 'ips_2',
+        subject: 'ips',
+        topic: 'Geografi Dunia',
+        question: 'Benua terluas di dunia dan memiliki jumlah populasi manusia terbanyak adalah...',
+        options: ['Afrika', 'Amerika', 'Asia', 'Eropa'],
+        answer: 2,
+        explanation: 'Benua Asia mencakup hampir 30% dari total luas daratan bumi dan dihuni oleh sekitar 60% penduduk dunia.'
+      },
+      {
+        id: 'ips_3',
+        subject: 'ips',
+        topic: 'Kerjasama Internasional',
+        question: 'Organisasi kerjasama bangsa-bangsa di kawasan regional Asia Tenggara dinamakan...',
+        options: ['APEC', 'ASEAN', 'OPEC', 'UNESCO'],
+        answer: 1,
+        explanation: 'ASEAN (Association of Southeast Asian Nations) didirikan pada tanggal 8 Agustus 1967 di Bangkok, Thailand.'
+      },
+      {
+        id: 'ips_4',
+        subject: 'ips',
+        topic: 'Ekonomi Dasar',
+        question: 'Kenaikan harga barang dan jasa secara umum serta berlangsung terus-menerus disebut fenomena...',
+        options: ['Deflasi', 'Resesi', 'Inflasi', 'Devaluasi'],
+        answer: 2,
+        explanation: 'Inflasi menurunkan daya beli mata uang karena harga-harga pasar meningkat secara berkala.'
+      },
+      {
+        id: 'ips_5',
+        subject: 'ips',
+        topic: 'Geografi & Peta',
+        question: 'Perbandingan antara jarak pada peta dengan jarak yang sebenarnya di lapangan disebut...',
+        options: ['Legenda', 'Skala', 'Orientasi Arah', 'Inset Peta'],
+        answer: 1,
+        explanation: 'Skala peta (contoh 1 : 100.000) berarti 1 cm di peta mewakili 100.000 cm (1 km) pada jarak sesungguhnya di permukaan bumi.'
+      },
+
+      // Bahasa Indonesia
+      {
+        id: 'bi_1',
+        subject: 'bindonesia',
+        topic: 'Pemahaman Bacaan',
+        question: 'Pokok permasalahan atau pesan utama yang mendasari sebuah paragraf disebut...',
+        options: ['Kalimat penjelas', 'Gagasan utama / Ide pokok', 'Kata kunci', 'Rangkuman'],
+        answer: 1,
+        explanation: 'Gagasan utama adalah inti pemikiran dari kalimat utama yang dijabarkan lebih lanjut oleh kalimat-kalimat pengembang/penjelas.'
+      },
+      {
+        id: 'bi_2',
+        subject: 'bindonesia',
+        topic: 'Majas / Gaya Bahasa',
+        question: 'Kalimat "Ombak berkejaran dan membelai lembut bibir pantai" menggunakan majas...',
+        options: ['Metafora', 'Personifikasi', 'Hiperbola', 'Ironi'],
+        answer: 1,
+        explanation: 'Majas personifikasi melekatkan perilaku atau sifat manusia (seperti berkejaran dan membelai) kepada benda mati/alam.'
+      },
+      {
+        id: 'bi_3',
+        subject: 'bindonesia',
+        topic: 'Ejaan & Kata Baku',
+        question: 'Kelompok kata yang semuanya baku menurut KBBI adalah...',
+        options: ['Ijin, Praktik, Aktip', 'Izin, Praktek, Aktif', 'Izin, Praktik, Aktif', 'Ijin, Praktek, Aktip'],
+        answer: 2,
+        explanation: 'Penulisan baku menurut KBBI adalah izin (bukan ijin), praktik (bukan praktek), dan aktif (bukan aktip).'
+      },
+      {
+        id: 'bi_4',
+        subject: 'bindonesia',
+        topic: 'Kosakata / Sinonim-Antonim',
+        question: 'Lawan kata (antonim) yang paling tepat untuk kata "OPTIMIS" adalah...',
+        options: ['Realistis', 'Pesimis', 'Statis', 'Apatis'],
+        answer: 1,
+        explanation: 'Optimis memiliki arti berpengharapan baik; antonimnya adalah pesimis (bersikap ragu/berpandangan buruk terhadap masa depan).'
+      },
+      {
+        id: 'bi_5',
+        subject: 'bindonesia',
+        topic: 'Sastra Tradisional / Pantun',
+        question: 'Ciri utama pola rima bait pantun empat baris yang benar adalah...',
+        options: ['a-a-a-a', 'a-b-a-b', 'a-a-b-b', 'a-b-b-a'],
+        answer: 1,
+        explanation: 'Pantun klasik memiliki rima akhir bersilang a-b-a-b, baris 1-2 sebagai sampiran dan baris 3-4 sebagai isi pesan.'
+      },
+
+      // Bahasa Inggris
+      {
+        id: 'eng_1',
+        subject: 'binggris',
+        topic: 'Grammar / Simple Past',
+        question: '"Yesterday afternoon, Rina ______ to the library to study biology."',
+        options: ['go', 'goes', 'went', 'gone'],
+        answer: 2,
+        explanation: 'Keterangan waktu "yesterday afternoon" menunjukkan Simple Past Tense, sehingga wajib memakai Verb-2 ("went").'
+      },
+      {
+        id: 'eng_2',
+        subject: 'binggris',
+        topic: 'Vocabulary / Antonym',
+        question: 'What is the opposite (antonym) of the adjective "GENEROUS"?',
+        options: ['Stingy / Selfish', 'Polite', 'Brave', 'Humble'],
+        answer: 0,
+        explanation: '"Generous" artinya dermawan atau suka memberi. Lawan katanya adalah "stingy" (pelit) atau "selfish" (mementingkan diri sendiri).'
+      },
+      {
+        id: 'eng_3',
+        subject: 'binggris',
+        topic: 'Passive Voice',
+        question: '"All the homework ______ by the students before the bell rang."',
+        options: ['is completed', 'was completed', 'completing', 'has completed'],
+        answer: 1,
+        explanation: 'Bentuk passive lampau: Subject (All the homework - uncountable) + was + Verb-3 ("completed").'
+      },
+      {
+        id: 'eng_4',
+        subject: 'binggris',
+        topic: 'Preposition of Interest',
+        question: 'Choose the correct preposition: "Farhan is very interested ______ learning robotic technology."',
+        options: ['at', 'on', 'in', 'with'],
+        answer: 2,
+        explanation: 'Kolokasi kata sifat yang tepat adalah "interested in" (bukan with/at/on).'
+      },
+      {
+        id: 'eng_5',
+        subject: 'binggris',
+        topic: 'Conditional Sentence Type 1',
+        question: '"If the weather is sunny tomorrow, we ______ a bicycle around the park."',
+        options: ['ride', 'will ride', 'would ride', 'ridden'],
+        answer: 1,
+        explanation: 'First Conditional: If + Simple Present (is sunny), main clause memakai will + Verb-1 ("will ride").'
+      },
+
+      // Informatika / TIK
+      {
+        id: 'inf_1',
+        subject: 'informatika',
+        topic: 'Perangkat Keras Komputer',
+        question: 'Komponen utama komputer yang berfungsi sebagai otak pemroses data dan instruksi logika adalah...',
+        options: ['Hard Disk', 'RAM', 'CPU (Processor)', 'Motherboard'],
+        answer: 2,
+        explanation: 'CPU (Central Processing Unit) mengeksekusi perhitungan aritmatika dan kontrol logika dari semua aplikasi komputer.'
+      },
+      {
+        id: 'inf_2',
+        subject: 'informatika',
+        topic: 'Keamanan Siber',
+        question: 'Penipuan digital yang memancing korban memasukkan password atau nomor kartu kredit melalui tautan palsu disebut...',
+        options: ['Phishing', 'Browsing', 'Streaming', 'Rendering'],
+        answer: 0,
+        explanation: 'Phishing menyamarkan situs/pesan seolah dari instansi resmi untuk mengelabui korban agar memberikan data pribadi sensitif.'
+      },
+      {
+        id: 'inf_3',
+        subject: 'informatika',
+        topic: 'Logika Pemrograman',
+        question: 'Urutan langkah-langkah logis dan sistematis untuk memecahkan suatu masalah komputasi dinamakan...',
+        options: ['Algoritma', 'Debugging', 'Compiler', 'Hardware'],
+        answer: 0,
+        explanation: 'Algoritma adalah rancangan langkah instruksional yang jelas untuk menyelesaikan problem atau kalkulasi.'
+      },
+      {
+        id: 'inf_4',
+        subject: 'informatika',
+        topic: 'Perangkat Masukan (Input)',
+        question: 'Manakah dari peralatan berikut yang tergolong perangkat masukan (Input Device)?',
+        options: ['Monitor LCD', 'Keyboard & Mouse', 'Printer Laser', 'Speaker Aktif'],
+        answer: 1,
+        explanation: 'Keyboard dan mouse memasukkan sinyal ke komputer, sementara monitor, printer, dan speaker mengeluarkan output.'
+      },
+      {
+        id: 'inf_5',
+        subject: 'informatika',
+        topic: 'Jaringan Komputer',
+        question: 'Protokol standar yang digunakan untuk mentransfer halaman web yang aman dengan enkripsi adalah...',
+        options: ['FTP', 'HTTP', 'HTTPS', 'SMTP'],
+        answer: 2,
+        explanation: 'HTTPS (Hypertext Transfer Protocol Secure) mengamankan pertukaran data web dengan enkripsi SSL/TLS.'
+      }
+    ];
+
+    var quizBank = load('quiz_bank', defaultQuestionBank);
+    var quizScores = load('quiz_scores', {});
+
+    var quizState = {
+      activeSubject: 'matematika',
+      questions: [],
+      currentIndex: 0,
+      userAnswers: [],
+      score: 0,
+      hasAnsweredCurrent: false
+    };
+
+    var quizViews = {
+      home: $('#quiz-view-home'),
+      play: $('#quiz-view-play'),
+      result: $('#quiz-view-result'),
+      create: $('#quiz-view-create'),
+      bank: $('#quiz-view-bank')
+    };
+
+    function showQuizView(viewKey){
+      Object.keys(quizViews).forEach(function(k){
+        if(quizViews[k]) quizViews[k].classList.toggle('active', k === viewKey);
+      });
+      $('#tab-content-wrapper').scrollTop = 0;
+    }
+
+    function updateSubjectCards(){
+      var subjects = ['matematika','ipa','ips','bindonesia','binggris','informatika'];
+      var totalAll = quizBank.length;
+
+      subjects.forEach(function(s){
+        var count = quizBank.filter(function(q){return q.subject === s;}).length;
+        var countEl = $('#count-' + s);
+        var scoreEl = $('#score-' + s);
+        if(countEl) countEl.textContent = count + ' soal';
+        if(scoreEl){
+          if(quizScores[s] !== undefined){
+            scoreEl.className = 'subject-score-text has-score';
+            scoreEl.innerHTML = '⭐ Skor: ' + quizScores[s] + '%';
+          } else {
+            scoreEl.className = 'subject-score-text';
+            scoreEl.textContent = 'Belum ada skor';
+          }
+        }
+      });
+
+      var countAllEl = $('#count-all');
+      var scoreAllEl = $('#score-all');
+      if(countAllEl) countAllEl.textContent = 'Total ' + totalAll + ' soal';
+      if(scoreAllEl){
+        if(quizScores.all !== undefined){
+          scoreAllEl.className = 'subject-score-text has-score';
+          scoreAllEl.innerHTML = '⭐ Skor Terbaik: ' + quizScores.all + '%';
+        } else {
+          scoreAllEl.className = 'subject-score-text';
+          scoreAllEl.textContent = 'Uji kemampuan komprehensifmu';
+        }
+      }
+    }
+
+    function shuffleArray(arr){
+      var res = arr.slice();
+      for(var i = res.length - 1; i > 0; i--){
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = res[i];
+        res[i] = res[j];
+        res[j] = temp;
+      }
+      return res;
+    }
+
+    function startQuiz(subjectKey){
+      var filtered = [];
+      if(subjectKey === 'all'){
+        filtered = shuffleArray(quizBank).slice(0, 10);
+      } else {
+        filtered = quizBank.filter(function(q){return q.subject === subjectKey;});
+      }
+
+      if(!filtered.length){
+        toast('⚠️ Belum ada soal untuk mata pelajaran ini! Buat soal baru sekarang.');
+        openQuizMaker(subjectKey !== 'all' ? subjectKey : 'matematika');
+        return;
+      }
+
+      quizState.activeSubject = subjectKey;
+      quizState.questions = shuffleArray(filtered);
+      quizState.currentIndex = 0;
+      quizState.userAnswers = [];
+      quizState.score = 0;
+      quizState.hasAnsweredCurrent = false;
+
+      var meta = subjectMeta[subjectKey] || { name: 'Kuis Pelajaran', icon: '🎓' };
+      $('#quiz-curr-icon').textContent = meta.icon;
+      $('#quiz-curr-subj-name').textContent = meta.name;
+
+      renderCurrentQuestion();
+      showQuizView('play');
+    }
+
+    function renderCurrentQuestion(){
+      var total = quizState.questions.length;
+      var curIdx = quizState.currentIndex;
+      var q = quizState.questions[curIdx];
+
+      quizState.hasAnsweredCurrent = false;
+
+      $('#quiz-q-counter').textContent = 'Soal ' + (curIdx + 1) + ' / ' + total;
+      var pct = Math.round(((curIdx) / total) * 100);
+      $('#quiz-progress-bar').style.width = pct + '%';
+
+      var subjInfo = subjectMeta[q.subject] || { name: q.subject, icon: '📚' };
+      $('#quiz-q-topic').textContent = subjInfo.icon + ' ' + (q.topic || subjInfo.name);
+      $('#quiz-q-text').textContent = q.question;
+
+      $('#quiz-explanation-card').style.display = 'none';
+      $('#quiz-next-wrap').style.display = 'none';
+
+      var optContainer = $('#quiz-options-container');
+      optContainer.innerHTML = '';
+      var letters = ['A', 'B', 'C', 'D'];
+
+      q.options.forEach(function(optText, idx){
+        var btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerHTML =
+          '<div class="quiz-opt-letter">' + letters[idx] + '</div>'
+          + '<div class="quiz-opt-text">' + escHtml(optText) + '</div>';
+
+        btn.addEventListener('click', function(){
+          if(!quizState.hasAnsweredCurrent){
+            handleOptionSelect(idx);
+          }
+        });
+        optContainer.appendChild(btn);
+      });
+    }
+
+    function handleOptionSelect(chosenIdx){
+      quizState.hasAnsweredCurrent = true;
+      var curIdx = quizState.currentIndex;
+      var q = quizState.questions[curIdx];
+      var isCorrect = (chosenIdx === q.answer);
+
+      if(isCorrect){
+        quizState.score++;
+        if(navigator.vibrate) try{navigator.vibrate(30);}catch(e){}
+      } else {
+        if(navigator.vibrate) try{navigator.vibrate([40, 40, 40]);}catch(e){}
+      }
+
+      quizState.userAnswers.push({
+        q: q,
+        chosen: chosenIdx,
+        isCorrect: isCorrect
+      });
+
+      var buttons = $$('.quiz-option-btn', $('#quiz-options-container'));
+      buttons.forEach(function(btn, idx){
+        if(idx === q.answer){
+          btn.classList.add('correct');
+        } else if(idx === chosenIdx && !isCorrect){
+          btn.classList.add('wrong');
+        } else {
+          btn.classList.add('dimmed');
+        }
+      });
+
+      var expCard = $('#quiz-explanation-card');
+      var expText = $('#quiz-explanation-text');
+      if(q.explanation){
+        expText.textContent = q.explanation;
+        expCard.style.display = 'block';
+      } else {
+        expText.textContent = 'Jawaban yang benar adalah pilihan ' + (['A','B','C','D'][q.answer]) + '.';
+        expCard.style.display = 'block';
+      }
+
+      var nextWrap = $('#quiz-next-wrap');
+      var nextBtn = $('#btn-quiz-next');
+      if(curIdx + 1 >= quizState.questions.length){
+        nextBtn.innerHTML = '<span>Lihat Hasil Akhir 🎉</span>';
+      } else {
+        nextBtn.innerHTML = '<span>Soal Selanjutnya →</span>';
+      }
+      nextWrap.style.display = 'block';
+
+      setTimeout(function(){
+        expCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+
+    function handleNextQuestion(){
+      if(quizState.currentIndex + 1 < quizState.questions.length){
+        quizState.currentIndex++;
+        renderCurrentQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz(){
+      var total = quizState.questions.length;
+      var correct = quizState.score;
+      var wrong = total - correct;
+      var finalScore = Math.round((correct / total) * 100);
+
+      var prevBest = quizScores[quizState.activeSubject] || 0;
+      if(finalScore > prevBest){
+        quizScores[quizState.activeSubject] = finalScore;
+        save('quiz_scores', quizScores);
+        updateSubjectCards();
+      }
+
+      $('#result-score-val').textContent = finalScore;
+      $('#res-stat-correct').textContent = correct;
+      $('#res-stat-wrong').textContent = wrong;
+      $('#res-stat-accuracy').textContent = finalScore + '%';
+
+      var title = 'Hebat Sekali! 🌟';
+      var desc = 'Pemahamanmu pada materi ini sangat mendalam! Pertahankan prestasi belajarmu.';
+      if(finalScore === 100){
+        title = 'Sempurna! 💯🏆';
+        desc = 'Nilai sempurna! Kamu telah menguasai seluruh konsep pelajaran ini dengan cemerlang.';
+      } else if(finalScore < 60){
+        title = 'Tetap Semangat! 💪';
+        desc = 'Belajar adalah proses! Baca kembali pembahasan jawaban di bawah untuk memperkuat konsepmu.';
+      } else if(finalScore < 80){
+        title = 'Bagus! 👍';
+        desc = 'Hasil yang cukup baik! Sedikit lagi latihan untuk mencapai skor maksimal.';
+      }
+
+      $('#result-title').textContent = title;
+      $('#result-desc').textContent = desc;
+
+      var reviewList = $('#quiz-review-list');
+      reviewList.innerHTML = '';
+      var letters = ['A','B','C','D'];
+
+      quizState.userAnswers.forEach(function(item, idx){
+        var card = document.createElement('div');
+        card.className = 'review-card';
+        var statusBadge = item.isCorrect 
+          ? '<span class="review-status-correct">✅ Benar</span>'
+          : '<span class="review-status-wrong">❌ Salah</span>';
+
+        card.innerHTML =
+          '<div class="review-card-top">'
+          + '<span>Soal #' + (idx + 1) + '</span>'
+          + statusBadge
+          + '</div>'
+          + '<div class="review-q">' + escHtml(item.q.question) + '</div>'
+          + '<div class="review-ans-row">'
+          + '<div class="review-user-ans">Jawabanmu: <strong>' + letters[item.chosen] + '. ' + escHtml(item.q.options[item.chosen]) + '</strong></div>'
+          + (!item.isCorrect ? '<div class="review-correct-ans">Kunci Benar: ' + letters[item.q.answer] + '. ' + escHtml(item.q.options[item.q.answer]) + '</div>' : '')
+          + '</div>'
+          + (item.q.explanation ? '<div class="review-exp">💡 <strong>Pembahasan:</strong> ' + escHtml(item.q.explanation) + '</div>' : '');
+
+        reviewList.appendChild(card);
+      });
+
+      showQuizView('result');
+    }
+
+    function openQuizMaker(defaultSubject){
+      if(defaultSubject && $('#maker-subject')){
+        $('#maker-subject').value = defaultSubject;
+      }
+      $('#maker-question').value = '';
+      $('#maker-opt-0').value = '';
+      $('#maker-opt-1').value = '';
+      $('#maker-opt-2').value = '';
+      $('#maker-opt-3').value = '';
+      $('#maker-explanation').value = '';
+      $('#radio-opt-0').checked = true;
+      showQuizView('create');
+    }
+
+    function saveCustomQuestion(){
+      var subj = $('#maker-subject').value;
+      var qText = $('#maker-question').value.trim();
+      var opt0 = $('#maker-opt-0').value.trim();
+      var opt1 = $('#maker-opt-1').value.trim();
+      var opt2 = $('#maker-opt-2').value.trim();
+      var opt3 = $('#maker-opt-3').value.trim();
+      var exp = $('#maker-explanation').value.trim();
+
+      var correctRadio = $('input[name="maker-correct"]:checked');
+      var correctIdx = correctRadio ? parseInt(correctRadio.value, 10) : 0;
+
+      if(!qText){
+        toast('⚠️ Pertanyaan soal belum diisi!');
+        $('#maker-question').focus();
+        return;
+      }
+      if(!opt0 || !opt1 || !opt2 || !opt3){
+        toast('⚠️ Keempat pilihan jawaban (A, B, C, D) harus diisi!');
+        return;
+      }
+
+      var newQ = {
+        id: 'user_' + uid(),
+        subject: subj,
+        topic: 'Soal Kustom',
+        question: qText,
+        options: [opt0, opt1, opt2, opt3],
+        answer: correctIdx,
+        explanation: exp || ('Kunci jawaban yang benar adalah pilihan ' + ['A','B','C','D'][correctIdx] + '.')
+      };
+
+      quizBank.unshift(newQ);
+      save('quiz_bank', quizBank);
+      updateSubjectCards();
+      toast('🎉 Soal baru berhasil disimpan ke Bank Soal!');
+      showQuizView('home');
+    }
+
+    var activeBankFilter = 'all';
+
+    function openBankView(){
+      renderBankList();
+      showQuizView('bank');
+    }
+
+    function renderBankList(){
+      var listEl = $('#bank-list');
+      listEl.innerHTML = '';
+
+      var filtered = quizBank;
+      if(activeBankFilter !== 'all'){
+        filtered = quizBank.filter(function(q){return q.subject === activeBankFilter;});
+      }
+
+      if(!filtered.length){
+        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada soal untuk kategori ini.</p></div>';
+        return;
+      }
+
+      var letters = ['A','B','C','D'];
+      filtered.forEach(function(q){
+        var item = document.createElement('div');
+        item.className = 'bank-item';
+
+        var subjMeta = subjectMeta[q.subject] || { name: q.subject, icon: '📚' };
+        var isCustom = q.id.startsWith('user_');
+
+        item.innerHTML =
+          '<div class="bank-item-body">'
+          + '<span class="bank-item-badge" style="background:var(--slate-100);color:var(--slate-700);">'
+          + subjMeta.icon + ' ' + subjMeta.name + (isCustom ? ' • Kustom' : ' • Bawaan')
+          + '</span>'
+          + '<div class="bank-item-q">' + escHtml(q.question) + '</div>'
+          + '<div class="bank-item-a">Kunci: ' + letters[q.answer] + '. ' + escHtml(q.options[q.answer]) + '</div>'
+          + '</div>'
+          + (isCustom ? '<button class="bank-item-del" data-id="' + q.id + '" title="Hapus soal"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' : '');
+
+        if(isCustom){
+          item.querySelector('.bank-item-del').addEventListener('click', function(){
+            deleteQuestionFromBank(q.id);
+          });
+        }
+
+        listEl.appendChild(item);
+      });
+    }
+
+    function deleteQuestionFromBank(qid){
+      quizBank = quizBank.filter(function(q){return q.id !== qid;});
+      save('quiz_bank', quizBank);
+      updateSubjectCards();
+      renderBankList();
+      toast('🗑️ Soal kustom dihapus.');
+    }
+
+    function resetDefaultBank(){
+      if(confirm('Pulihkan seluruh bank soal ke pertanyaan bawaan standar?')){
+        quizBank = defaultQuestionBank.slice();
+        save('quiz_bank', quizBank);
+        updateSubjectCards();
+        renderBankList();
+        toast('🔄 Bank soal berhasil dipulihkan.');
+      }
+    }
+
+    // ==========================================
+    // === ADMIN AUTHENTICATION & PERMISSIONS ===
+    // ==========================================
+    var ADMIN_CREDENTIALS = {
+      username: 'admin',
+      password: 'admin123'
+    };
+    var isAdmin = load('is_admin', false);
+    var pendingAdminCallback = null;
+
+    function openAdminModal(reason, onSuccessCallback){
+      pendingAdminCallback = onSuccessCallback || null;
+      $('#admin-user-input').value = '';
+      $('#admin-pass-input').value = '';
+      $('#admin-pass-input').type = 'password';
+      $('#admin-error-msg').style.display = 'none';
+      if(reason){
+        $('#admin-modal-reason').textContent = reason;
+      } else {
+        $('#admin-modal-reason').textContent = 'Hanya admin yang berhak mengubah isi dan soal kuis pada web ini.';
+      }
+      $('#admin-modal-overlay').style.display = 'flex';
+      setTimeout(function(){$('#admin-user-input').focus();}, 150);
+    }
+
+    function closeAdminModal(){
+      $('#admin-modal-overlay').style.display = 'none';
+      pendingAdminCallback = null;
+    }
+
+    function openAdminStatusModal(){
+      $('#admin-status-overlay').style.display = 'flex';
+    }
+
+    function closeAdminStatusModal(){
+      $('#admin-status-overlay').style.display = 'none';
+    }
+
+    function handleAdminLogin(){
+      var u = $('#admin-user-input').value.trim();
+      var p = $('#admin-pass-input').value.trim();
+      var errEl = $('#admin-error-msg');
+
+      if(!u || !p){
+        errEl.textContent = 'Harap isi nama dan kata sandi admin!';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      if(u.toLowerCase() === ADMIN_CREDENTIALS.username && p === ADMIN_CREDENTIALS.password){
+        isAdmin = true;
+        save('is_admin', true);
+        closeAdminModal();
+        updateAdminUI();
+        toast('👑 Selamat datang, Admin! Mode pengeditan aktif.');
+        if(typeof pendingAdminCallback === 'function'){
+          var cb = pendingAdminCallback;
+          pendingAdminCallback = null;
+          cb();
+        }
+      } else {
+        errEl.textContent = 'Nama atau kata sandi salah! (Nama: admin, Pass: admin123)';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function handleAdminLogout(){
+      isAdmin = false;
+      save('is_admin', false);
+      closeAdminStatusModal();
+      if(quizViews.create && quizViews.create.classList.contains('active')){
+        showQuizView('home');
+      }
+      updateAdminUI();
+      toast('🔒 Anda sekarang berada dalam Mode Pengunjung.');
+    }
+
+    function updateAdminUI(){
+      var btn = $('#header-admin-btn');
+      var icon = $('#header-admin-icon');
+      var label = $('#header-admin-label');
+      var badge = $('#quiz-hero-badge');
+      var desc = $('#quiz-hero-desc');
+      var makerIcon = $('#maker-btn-icon');
+      var makerText = $('#maker-btn-text');
+
+      if(isAdmin){
+        if(btn) btn.classList.add('is-admin');
+        if(icon) icon.textContent = '👑';
+        if(label) label.textContent = 'Admin';
+        if(badge) badge.textContent = '👑 Mode Admin Aktif';
+        if(desc) desc.textContent = 'Mode Admin: Anda dapat membuat, mengubah, dan mengelola soal kuis untuk semua mata pelajaran.';
+        if(makerIcon) makerIcon.textContent = '➕';
+        if(makerText) makerText.textContent = 'Buat Soal (Admin)';
+      } else {
+        if(btn) btn.classList.remove('is-admin');
+        if(icon) icon.textContent = '🔒';
+        if(label) label.textContent = 'Masuk Admin';
+        if(badge) badge.textContent = '🎓 Mode Pengunjung';
+        if(desc) desc.textContent = 'Mode Pengunjung: Pilih mapel untuk latihan kuis. Masuk sebagai admin untuk mengubah atau membuat soal.';
+        if(makerIcon) makerIcon.textContent = '🔒';
+        if(makerText) makerText.textContent = 'Buat Soal';
+      }
+
+      var taskAdminBadge = $('#task-admin-badge');
+      var taskSubtitle = $('#task-subtitle');
+      var taskInput = $('#task-input');
+
+      if(isAdmin){
+        if(taskAdminBadge){
+          taskAdminBadge.textContent = '👑 Mode Admin';
+          taskAdminBadge.style.background = '#fef08a';
+          taskAdminBadge.style.color = '#854d0e';
+        }
+        if(taskSubtitle) taskSubtitle.textContent = 'Mode Admin: Tambah, centang, dan kelola tugas resmi';
+        if(taskInput){
+          taskInput.placeholder = 'Nama tugas baru…';
+          taskInput.readOnly = false;
+        }
+      } else {
+        if(taskAdminBadge){
+          taskAdminBadge.textContent = '🔒 Khusus Admin';
+          taskAdminBadge.style.background = '#fef2f2';
+          taskAdminBadge.style.color = '#ef4444';
+        }
+        if(taskSubtitle) taskSubtitle.textContent = 'Mode Pengunjung: Daftar tugas hanya dapat diubah oleh Admin';
+        if(taskInput){
+          taskInput.placeholder = '🔒 Masuk Admin untuk menambah tugas…';
+          taskInput.readOnly = true;
+        }
+      }
+
+      renderTasks();
+      renderBankList();
+    }
+
+    // Modal Triggers
+    $('#header-admin-btn').addEventListener('click', function(){
+      if(isAdmin){
+        openAdminStatusModal();
+      } else {
+        openAdminModal();
+      }
+    });
+
+    $('#btn-submit-admin').addEventListener('click', handleAdminLogin);
+    $('#admin-pass-input').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') handleAdminLogin();
+    });
+    $('#admin-user-input').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') $('#admin-pass-input').focus();
+    });
+
+    $('#btn-close-admin-modal').addEventListener('click', closeAdminModal);
+    $('#btn-close-admin-status').addEventListener('click', closeAdminStatusModal);
+    $('#btn-logout-admin').addEventListener('click', handleAdminLogout);
+
+    $('#btn-toggle-pass').addEventListener('click', function(){
+      var inp = $('#admin-pass-input');
+      if(inp.type === 'password'){
+        inp.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        inp.type = 'password';
+        this.textContent = '👁️';
+      }
+    });
+
+    // Close modal on click backdrop
+    $('#admin-modal-overlay').addEventListener('click', function(e){
+      if(e.target === this) closeAdminModal();
+    });
+    $('#admin-status-overlay').addEventListener('click', function(e){
+      if(e.target === this) closeAdminStatusModal();
+    });
+
+    function openQuizMaker(defaultSubject){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang berhak membuat soal kuis baru.', function(){
+          openQuizMaker(defaultSubject);
+        });
+        return;
+      }
+      if(defaultSubject && $('#maker-subject')){
+        $('#maker-subject').value = defaultSubject;
+      }
+      $('#maker-question').value = '';
+      $('#maker-opt-0').value = '';
+      $('#maker-opt-1').value = '';
+      $('#maker-opt-2').value = '';
+      $('#maker-opt-3').value = '';
+      $('#maker-explanation').value = '';
+      $('#radio-opt-0').checked = true;
+      showQuizView('create');
+    }
+
+    function saveCustomQuestion(){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat menyimpan soal kuis baru.');
+        return;
+      }
+      var subj = $('#maker-subject').value;
+      var qText = $('#maker-question').value.trim();
+      var opt0 = $('#maker-opt-0').value.trim();
+      var opt1 = $('#maker-opt-1').value.trim();
+      var opt2 = $('#maker-opt-2').value.trim();
+      var opt3 = $('#maker-opt-3').value.trim();
+      var exp = $('#maker-explanation').value.trim();
+
+      var correctRadio = $('input[name="maker-correct"]:checked');
+      var correctIdx = correctRadio ? parseInt(correctRadio.value, 10) : 0;
+
+      if(!qText){
+        toast('⚠️ Pertanyaan soal belum diisi!');
+        $('#maker-question').focus();
+        return;
+      }
+      if(!opt0 || !opt1 || !opt2 || !opt3){
+        toast('⚠️ Keempat pilihan jawaban (A, B, C, D) harus diisi!');
+        return;
+      }
+
+      var newQ = {
+        id: 'user_' + uid(),
+        subject: subj,
+        topic: 'Soal Kustom',
+        question: qText,
+        options: [opt0, opt1, opt2, opt3],
+        answer: correctIdx,
+        explanation: exp || ('Kunci jawaban yang benar adalah pilihan ' + ['A','B','C','D'][correctIdx] + '.')
+      };
+
+      quizBank.unshift(newQ);
+      save('quiz_bank', quizBank);
+      updateSubjectCards();
+      toast('🎉 Soal baru berhasil disimpan ke Bank Soal!');
+      showQuizView('home');
+    }
+
+    var activeBankFilter = 'all';
+
+    function openBankView(){
+      renderBankList();
+      showQuizView('bank');
+    }
+
+    function renderBankList(){
+      var listEl = $('#bank-list');
+      if(!listEl) return;
+      listEl.innerHTML = '';
+
+      var filtered = quizBank;
+      if(activeBankFilter !== 'all'){
+        filtered = quizBank.filter(function(q){return q.subject === activeBankFilter;});
+      }
+
+      if(!filtered.length){
+        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada soal untuk kategori ini.</p></div>';
+        return;
+      }
+
+      var letters = ['A','B','C','D'];
+      filtered.forEach(function(q){
+        var item = document.createElement('div');
+        item.className = 'bank-item';
+
+        var subjMeta = subjectMeta[q.subject] || { name: q.subject, icon: '📚' };
+        var isCustom = q.id.startsWith('user_');
+
+        var deleteBtnHtml = (isCustom && isAdmin)
+          ? '<button class="bank-item-del" data-id="' + q.id + '" title="Hapus soal"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+          : '';
+
+        item.innerHTML =
+          '<div class="bank-item-body">'
+          + '<span class="bank-item-badge" style="background:var(--slate-100);color:var(--slate-700);">'
+          + subjMeta.icon + ' ' + subjMeta.name + (isCustom ? ' • Kustom' : ' • Bawaan')
+          + '</span>'
+          + '<div class="bank-item-q">' + escHtml(q.question) + '</div>'
+          + '<div class="bank-item-a">Kunci: ' + letters[q.answer] + '. ' + escHtml(q.options[q.answer]) + '</div>'
+          + '</div>'
+          + deleteBtnHtml;
+
+        if(isCustom && isAdmin){
+          var delBtn = item.querySelector('.bank-item-del');
+          if(delBtn){
+            delBtn.addEventListener('click', function(){
+              deleteQuestionFromBank(q.id);
+            });
+          }
+        }
+
+        listEl.appendChild(item);
+      });
+    }
+
+    function deleteQuestionFromBank(qid){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat menghapus soal dari bank soal.');
+        return;
+      }
+      quizBank = quizBank.filter(function(q){return q.id !== qid;});
+      save('quiz_bank', quizBank);
+      updateSubjectCards();
+      renderBankList();
+      toast('🗑️ Soal kustom dihapus.');
+    }
+
+    function resetDefaultBank(){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang dapat mereset bank soal ke standar.', resetDefaultBank);
+        return;
+      }
+      if(confirm('Pulihkan seluruh bank soal ke pertanyaan bawaan standar?')){
+        quizBank = defaultQuestionBank.slice();
+        save('quiz_bank', quizBank);
+        updateSubjectCards();
+        renderBankList();
+        toast('🔄 Bank soal berhasil dipulihkan.');
+      }
+    }
+
+    // Attach Event Listeners for Quiz Tab
+    $$('.subject-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var subj = card.dataset.subj;
+        startQuiz(subj);
+      });
+    });
+
+    $('#btn-quiz-exit').addEventListener('click', function(){
+      if(confirm('Yakin ingin keluar dari kuis yang sedang berjalan?')){
+        showQuizView('home');
+      }
+    });
+    $('#btn-quiz-next').addEventListener('click', handleNextQuestion);
+
+    $('#btn-retake-quiz').addEventListener('click', function(){
+      startQuiz(quizState.activeSubject);
+    });
+    $('#btn-back-subjects').addEventListener('click', function(){
+      showQuizView('home');
+    });
+
+    $('#btn-open-maker').addEventListener('click', function(){ 
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang berhak membuat soal kuis baru.', function(){
+          openQuizMaker('matematika');
+        });
+      } else {
+        openQuizMaker('matematika');
+      }
+    });
+    $('#btn-open-bank').addEventListener('click', openBankView);
+
+    $('#btn-cancel-maker').addEventListener('click', function(){ showQuizView('home'); });
+    $('#btn-cancel-maker-2').addEventListener('click', function(){ showQuizView('home'); });
+    $('#btn-save-quiz-question').addEventListener('click', saveCustomQuestion);
+
+    $('#btn-close-bank').addEventListener('click', function(){ showQuizView('home'); });
+    $('#btn-bank-add').addEventListener('click', function(){
+      if(!isAdmin){
+        openAdminModal('Hanya Admin yang berhak membuat soal kuis baru.', function(){
+          openQuizMaker();
+        });
+      } else {
+        openQuizMaker();
+      }
+    });
+    $('#btn-reset-default-bank').addEventListener('click', resetDefaultBank);
+
+    $$('.bank-filter-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        $$('.bank-filter-chip').forEach(function(c){c.classList.remove('active');});
+        chip.classList.add('active');
+        activeBankFilter = chip.dataset.filter;
+        renderBankList();
+      });
+    });
+
+    updateSubjectCards();
+    updateAdminUI();
+
+  })();
+  </script>
+</body>
+</html>
